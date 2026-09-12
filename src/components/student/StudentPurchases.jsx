@@ -25,7 +25,7 @@ export default function StudentPurchases({ enrollments }) {
               <div style={{ minWidth: 0, flexGrow: 1 }}>
                 <Text fw={700} lineClamp={2}>{enroll.course?.title}</Text>
                 <Text size="sm" c="dimmed" mt={4}>
-                  Amount: <strong>${pay?.amount || 0}</strong>
+                  Amount: <strong>₹{pay?.amount || 0}</strong>
                 </Text>
                 <Text size="xs" c="dimmed" mt={2}>
                   Submitted: {new Date(enroll.createdAt).toLocaleDateString()}

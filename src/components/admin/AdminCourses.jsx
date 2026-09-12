@@ -114,7 +114,7 @@ export default function AdminCourses({ courses, categories, onReload }) {
                   </Table.Td>
                   <Table.Td fw={500}>{c.title}</Table.Td>
                   <Table.Td>{c.instructor}</Table.Td>
-                  <Table.Td>${c.discountedPrice || c.price}</Table.Td>
+                  <Table.Td>₹{c.discountedPrice || c.price}</Table.Td>
                   <Table.Td>
                     <StatusBadge status={c.isPublished ? 'published' : 'draft'} />
                   </Table.Td>
@@ -140,8 +140,8 @@ export default function AdminCourses({ courses, categories, onReload }) {
           <TextInput label="Short Description (max 150 chars)" maxLength={150} {...register('shortDescription')} mb="sm" />
           <Textarea label="Syllabus/Full Description" required {...register('description')} minRows={4} mb="sm" />
           <Group grow mb="sm">
-            <TextInput label="Base Price ($)" required type="number" {...register('price')} />
-            <TextInput label="Discounted Price ($)" type="number" {...register('discountedPrice')} />
+            <TextInput label="Base Price (₹)" required type="number" {...register('price')} />
+            <TextInput label="Discounted Price (₹)" type="number" {...register('discountedPrice')} />
           </Group>
           <Group grow mb="sm">
             <TextInput label="Duration (e.g. 6 Weeks)" {...register('duration')} />

@@ -231,17 +231,17 @@ export default function CourseDetails() {
                   <div style={{ minWidth: 0 }}>
                     <Group gap={10} align="baseline" wrap="nowrap">
                       <Text fw={800} style={{ fontSize: '2rem', color: 'var(--mantine-color-indigo-6)', lineHeight: 1 }}>
-                        ${price}
+                        ₹{price}
                       </Text>
                       {hasDiscount && (
                         <Text size="md" c="dimmed" td="line-through">
-                          ${course.price}
+                          ₹{course.price}
                         </Text>
                       )}
                     </Group>
                     {hasDiscount && (
                       <Text size="xs" c="green" fw={700} mt={2}>
-                        Save ${saved}
+                        Save ₹{saved}
                       </Text>
                     )}
                   </div>
@@ -420,7 +420,7 @@ export default function CourseDetails() {
           overlayProps={{ blur: 3 }}
         >
           <Text size="sm" c="dimmed" mb="lg">
-            Enroll in <strong>{course.title}</strong> by paying <strong>${price}</strong> via manual
+            Enroll in <strong>{course.title}</strong> by paying <strong>₹{price}</strong> via manual
             transfer, then submit your proof below.
           </Text>
 
@@ -443,7 +443,7 @@ export default function CourseDetails() {
                 <Text size="sm">IFSC Code: <strong>SKILL0001</strong></Text>
               </Paper>
               <Text size="xs" c="dimmed" mt="md">
-                Use these details to transfer <strong>${price}</strong>. Keep the receipt ready — you will upload it in the next steps.
+                Use these details to transfer <strong>₹{price}</strong>. Keep the receipt ready — you will upload it in the next steps.
               </Text>
             </Stepper.Step>
 
@@ -492,7 +492,7 @@ export default function CourseDetails() {
                     </Group>
                     <Group justify="space-between" wrap="nowrap">
                       <Text size="sm" c="dimmed">Amount</Text>
-                      <Text size="sm" fw={600}>${price}</Text>
+                      <Text size="sm" fw={600}>₹{price}</Text>
                     </Group>
                     <Group justify="space-between" wrap="nowrap">
                       <Text size="sm" c="dimmed">Transaction ID</Text>

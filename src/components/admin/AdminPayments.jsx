@@ -30,7 +30,7 @@ export default function AdminPayments({ payments }) {
                   <Text size="xs" c="dimmed">{p.user?.email || ''}</Text>
                 </Table.Td>
                 <Table.Td>{p.course?.title || 'Course Deleted'}</Table.Td>
-                <Table.Td>${p.amount}</Table.Td>
+                <Table.Td>₹{p.amount}</Table.Td>
                 <Table.Td>
                   <Text size="xs" fw={700} style={{ fontFamily: 'monospace' }}>
                     {p.transactionId || 'N/A'}

@@ -21,7 +21,7 @@ export default function PaymentApprovalTable({ payments, onApprove, onReject }) 
               <Text size="xs" c="dimmed">{p.user?.email}</Text>
             </Table.Td>
             <Table.Td>{p.course?.title}</Table.Td>
-            <Table.Td>${p.amount}</Table.Td>
+            <Table.Td>₹{p.amount}</Table.Td>
             <Table.Td>
               <a href={`http://localhost:5000${p.screenshotUrl}`} target="_blank" rel="noreferrer">
                 <Image

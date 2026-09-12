@@ -91,10 +91,10 @@ export default function CourseCard({ course, variant = 'catalog', onOpen = null 
               styles={{ root: { background: 'rgba(0,0,0,0.6)', border: 'none' } }}
             >
               <Group gap={6} align="baseline" wrap="nowrap">
-                <Text span fw={800} c="white" size="sm">${price}</Text>
+                <Text span fw={800} c="white" size="sm">₹{price}</Text>
                 {hasDiscount && (
                   <Text span size="xs" td="line-through" style={{ color: 'rgba(255,255,255,0.65)' }}>
-                    ${course.price}
+                    ₹{course.price}
                   </Text>
                 )}
               </Group>

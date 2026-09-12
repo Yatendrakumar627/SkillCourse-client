@@ -57,7 +57,7 @@ export default function AdminOverview({ payments, students, courses, pendingPaym
   return (
     <>
       <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="lg" mb="xl">
-        <StatCard label="Total Revenue" value={`$${totalRevenue}`} icon={IconCash} sub="Approved payments" />
+        <StatCard label="Total Revenue" value={`₹${totalRevenue}`} icon={IconCash} sub="Approved payments" />
         <StatCard label="Total Students" value={students.length} icon={IconUsers} sub="Registered accounts" />
         <StatCard label="Courses in LMS" value={courses.length} icon={IconBook} sub="Active catalog" />
         <StatCard

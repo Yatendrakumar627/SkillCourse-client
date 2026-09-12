@@ -65,7 +65,7 @@ export default function StudentActivityModal({ opened, onClose, studentId }) {
                           {e.accessGranted ? 'GRANTED' : 'PENDING'}
                         </Badge>
                       </Table.Td>
-                      <Table.Td>${e.paymentId?.amount || 0}</Table.Td>
+                      <Table.Td>₹{e.paymentId?.amount || 0}</Table.Td>
                       <Table.Td>
                         <Text size="xs" fw={700} style={{ fontFamily: 'monospace' }}>
                           {e.paymentId?.transactionId || 'N/A'}
