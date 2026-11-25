@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   Container,
@@ -17,7 +18,6 @@ import {
   Transition,
   Stack,
 } from '@mantine/core';
-import { useWindowScroll } from '@mantine/hooks';
 import { getCoursesAPI, getCategoriesAPI } from '../services/api';
 import { IconSearch, IconX, IconArrowUp } from '@tabler/icons-react';
 import CourseCard from '../components/courses/CourseCard';
@@ -44,6 +44,7 @@ const LEVEL_OPTIONS = [
 
 const SORT_OPTIONS = [
   { value: 'featured', label: 'Sort: Featured' },
+  { value: 'deals', label: 'Sort: Best Deals (% Off)' },
   { value: 'price-asc', label: 'Price: Low to High' },
   { value: 'price-desc', label: 'Price: High to Low' },
 ];
@@ -51,14 +52,24 @@ const SORT_OPTIONS = [
 const SUGGESTED_QUERIES = ['AI', 'Placement', 'Python', 'Data Analytics', 'TypeScript', 'Java'];
 
 const effectivePrice = (c) => Number(c.discountedPrice ?? c.price ?? 0);
+const discountPercent = (c) => {
+  if (c.discountedPrice == null || c.discountedPrice >= c.price || !c.price) return 0;
+  return Math.round((1 - c.discountedPrice / c.price) * 100);
+};
 
 export default function Courses() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [courses, setCourses] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [scroll, scrollTo] = useWindowScroll();
+  const [showTop, setShowTop] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const next = window.scrollY > 450;
+      setShowTop((prev) => (prev === next ? prev : next));
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const search = searchParams.get('q') || '';
   const selectedCategory = searchParams.get('category') || 'all';
@@ -75,28 +86,41 @@ export default function Courses() {
     setSearchParams(next, { replace: true });
   }, [searchParams, setSearchParams]);
 
-  const loadCatalog = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const [coursesRes, catsRes] = await Promise.all([getCoursesAPI(), getCategoriesAPI()]);
-      const sortedCats = [...catsRes].sort((a, b) => {
-        const ia = CATEGORY_ORDER.indexOf(a.slug);
-        const ib = CATEGORY_ORDER.indexOf(b.slug);
-        return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
-      });
-      setCourses(coursesRes);
-      setCategories(sortedCats);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load courses');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const {
+    data: courses = [],
+    isLoading: coursesLoading,
+    error: coursesError,
+    refetch: refetchCourses,
+  } = useQuery({
+    queryKey: ['courses'],
+    queryFn: () => getCoursesAPI(),
+  });
 
-  useEffect(() => {
-    loadCatalog();
-  }, [loadCatalog]);
+  const {
+    data: rawCategories = [],
+    isLoading: catsLoading,
+    error: catsError,
+    refetch: refetchCats,
+  } = useQuery({
+    queryKey: ['categories'],
+    queryFn: getCategoriesAPI,
+  });
+
+  const categories = useMemo(() => {
+    return [...rawCategories].sort((a, b) => {
+      const ia = CATEGORY_ORDER.indexOf(a.slug);
+      const ib = CATEGORY_ORDER.indexOf(b.slug);
+      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+    });
+  }, [rawCategories]);
+
+  const loading = coursesLoading || catsLoading;
+  const queryErr = coursesError || catsError;
+  const error = queryErr ? queryErr.response?.data?.message || 'Failed to load courses' : '';
+  const loadCatalog = useCallback(() => {
+    refetchCourses();
+    refetchCats();
+  }, [refetchCourses, refetchCats]);
 
   // Resolve ?category= whether passed as Mongo _id or category slug
   const resolvedCategoryId = useMemo(() => {
@@ -140,6 +164,9 @@ export default function Courses() {
       return haystack.includes(q);
     });
 
+    if (sortBy === 'deals') {
+      return [...list].sort((a, b) => discountPercent(b) - discountPercent(a) || effectivePrice(a) - effectivePrice(b));
+    }
     if (sortBy === 'price-asc') {
       return [...list].sort((a, b) => effectivePrice(a) - effectivePrice(b));
     }
@@ -203,16 +230,14 @@ export default function Courses() {
         )}
       </Group>
 
-      {/* Sticky compact filter bar */}
-      <div className="sticky-bar">
-        <Paper
-          withBorder
-          radius="lg"
-          p="sm"
-          mb="xl"
-          className="lms-header"
-          style={{ boxShadow: 'var(--mantine-shadow-sm)' }}
-        >
+      {/* Filter bar */}
+      <Paper
+        withBorder
+        radius="lg"
+        p="sm"
+        mb="xl"
+        style={{ background: 'var(--mantine-color-body)', boxShadow: 'var(--mantine-shadow-sm)' }}
+      >
           <Group align="center" gap="sm" wrap="wrap" p="xs">
             <TextInput
               placeholder="Search by course, language (Python, Java, Rust), or instructor..."
@@ -302,8 +327,7 @@ export default function Courses() {
               })}
             </Group>
           )}
-        </Paper>
-      </div>
+      </Paper>
 
       {loading ? (
         <Box className="course-grid">
@@ -356,7 +380,7 @@ export default function Courses() {
 
       {/* Floating Back to Top button for long catalog browsing */}
       <Affix position={{ bottom: 24, right: 24 }}>
-        <Transition transition="slide-up" mounted={scroll.y > 450}>
+        <Transition transition="slide-up" mounted={showTop}>
           {(transitionStyles) => (
             <Button
               style={transitionStyles}
@@ -364,7 +388,7 @@ export default function Courses() {
               radius="xl"
               color="indigo"
               shadow="md"
-              onClick={() => scrollTo({ y: 0 })}
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
               aria-label="Scroll back to top"
             >
               Top

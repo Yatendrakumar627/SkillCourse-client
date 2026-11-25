@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Container, Title, Text, Button, Group, SimpleGrid, Card, Accordion, Box, ThemeIcon, Badge, Paper, TextInput, Stack } from '@mantine/core';
 import { Link, useNavigate } from 'react-router-dom';
 import { getCoursesAPI } from '../services/api';
@@ -107,28 +108,23 @@ const FAQS = [
 ];
 
 export default function Home() {
-  const [courses, setCourses] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [query, setQuery] = useState('');
   const navigate = useNavigate();
 
-  const loadFeaturedCourses = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const res = await getCoursesAPI();
-      setCourses(res.slice(0, 6));
-    } catch (err) {
-      setError(err.response?.data?.message || 'Unable to load courses right now. Make sure the server is running.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const {
+    data: allCourses = [],
+    isLoading: loading,
+    error: queryError,
+    refetch: loadFeaturedCourses,
+  } = useQuery({
+    queryKey: ['courses'],
+    queryFn: () => getCoursesAPI(),
+  });
 
-  useEffect(() => {
-    loadFeaturedCourses();
-  }, [loadFeaturedCourses]);
+  const courses = allCourses.slice(0, 6);
+  const error = queryError
+    ? queryError.response?.data?.message || 'Unable to load courses right now. Make sure the server is running.'
+    : '';
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -261,6 +257,8 @@ export default function Home() {
                     <img
                       src={heroImg}
                       alt="Live learning illustration"
+                      fetchPriority="high"
+                      decoding="async"
                       style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                   </Box>

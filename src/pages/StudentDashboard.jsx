@@ -1,14 +1,17 @@
-import { Container, Tabs, Paper, Text, Title, Group, Badge, SimpleGrid, ThemeIcon } from '@mantine/core';
+import { Container, Tabs, Paper, Text, Title, Group, Badge, SimpleGrid, ThemeIcon, Button, Alert, Box } from '@mantine/core';
 import {
   IconBook, IconCalendar, IconBell, IconReceipt, IconDownload, IconUser,
-  IconBook2, IconCalendarEvent, IconClipboardList,
+  IconBook2, IconCalendarEvent, IconClipboardList, IconSparkles, IconArrowRight, IconInfoCircle,
 } from '@tabler/icons-react';
-import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import useStudentData from '../hooks/useStudentData';
+import { getCoursesAPI } from '../services/api';
 import LoadingState from '../components/ui/LoadingState';
 import ErrorState from '../components/ui/ErrorState';
+import CourseCard from '../components/courses/CourseCard';
 import StudentCourses from '../components/student/StudentCourses';
 import StudentLiveClasses from '../components/student/StudentLiveClasses';
 import StudentAnnouncements from '../components/student/StudentAnnouncements';
@@ -24,7 +27,7 @@ function SummaryCard({ icon: Icon, value, label }) {
           <Icon size={20} />
         </ThemeIcon>
         <div style={{ minWidth: 0 }}>
-          <Text fw={800} size="xl" style={{ lineHeight: 1.1 }}>
+          <Text fw={800} size="xl" className="tabular-nums" style={{ lineHeight: 1.1 }}>
             {value}
           </Text>
           <Text size="xs" c="dimmed" fw={500} truncate>
@@ -45,6 +48,11 @@ function TabCount({ count }) {
   );
 }
 
+const getDiscountPct = (c) => {
+  if (c.discountedPrice == null || c.discountedPrice >= c.price || !c.price) return 0;
+  return Math.round((1 - c.discountedPrice / c.price) * 100);
+};
+
 export default function StudentDashboard() {
   const { user } = useAuthStore();
   const { courses, classes, announcements, enrollments, assignments, submissions, notifications, loading, error, reload } = useStudentData();
@@ -56,6 +64,29 @@ export default function StudentDashboard() {
   useEffect(() => {
     setActiveTab(new URLSearchParams(location.search).get('tab') || 'courses');
   }, [location.search]);
+
+  const { data: catalogCourses = [] } = useQuery({
+    queryKey: ['courses'],
+    queryFn: () => getCoursesAPI(),
+  });
+
+  const dealCourses = useMemo(() => {
+    const ownedOrPendingIds = new Set(
+      enrollments
+        .filter((e) => e.accessGranted || e.paymentId?.status === 'pending')
+        .map((e) => String(e.course?._id || e.course))
+    );
+    return catalogCourses
+      .filter((c) => !ownedOrPendingIds.has(String(c._id)))
+      .sort((a, b) => {
+        const diff = getDiscountPct(b) - getDiscountPct(a);
+        if (diff !== 0) return diff;
+        const pa = Number(a.discountedPrice ?? a.price ?? 0);
+        const pb = Number(b.discountedPrice ?? b.price ?? 0);
+        return pa - pb;
+      })
+      .slice(0, 3);
+  }, [catalogCourses, enrollments]);
 
   if (loading) {
     return <LoadingState label="Loading dashboard details..." fullPage variant="skeleton" rows={5} />;
@@ -74,6 +105,12 @@ export default function StudentDashboard() {
   ).length;
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const pendingCount = enrollments.filter(
+    (e) => !e.accessGranted && e.paymentId?.status === 'pending'
+  ).length;
+  const rejectedCount = enrollments.filter(
+    (e) => !e.accessGranted && e.paymentId?.status === 'rejected'
+  ).length;
 
   const stats = [
     { icon: IconBook2, value: courses.length, label: 'My Courses' },
@@ -96,7 +133,7 @@ export default function StudentDashboard() {
           <div style={{ maxWidth: 460, minWidth: 260 }}>
             <Title order={2} size="h2">Welcome back, {user?.name}!</Title>
             <Text size="sm" c="dimmed" mt={4}>
-              Continue your learning journey and stay on top of your upcoming classes.
+              Track your enrolled courses, upcoming live sessions, and assignments—or explore new courses with exclusive deals.
             </Text>
           </div>
           <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="sm" style={{ flexGrow: 1, minWidth: 320 }}>
@@ -106,6 +143,27 @@ export default function StudentDashboard() {
           </SimpleGrid>
         </Group>
       </Paper>
+
+      {(pendingCount > 0 || rejectedCount > 0) && (
+        <Alert
+          icon={<IconInfoCircle size={18} />}
+          color={rejectedCount > 0 ? 'red' : 'yellow'}
+          variant="light"
+          radius="md"
+          mb="lg"
+          title={rejectedCount > 0 ? 'Payment Action Needed' : 'Enrollment Verification Pending'}
+        >
+          <Group justify="space-between" align="center" wrap="wrap" gap="sm">
+            <Text size="sm">
+              {pendingCount > 0 && `You have ${pendingCount} enrollment request${pendingCount > 1 ? 's' : ''} awaiting verification. `}
+              {rejectedCount > 0 && `${rejectedCount} payment${rejectedCount > 1 ? 's were' : ' was'} rejected and can be re-submitted.`}
+            </Text>
+            <Button size="xs" variant="light" color={rejectedCount > 0 ? 'red' : 'yellow'} onClick={() => setActiveTab('payments')}>
+              View Purchase Requests
+            </Button>
+          </Group>
+        </Alert>
+      )}
 
       {/* Unified horizontal navigation */}
       <Tabs value={activeTab} onChange={setActiveTab} color="indigo">
@@ -154,6 +212,38 @@ export default function StudentDashboard() {
           <StudentProfile />
         </Tabs.Panel>
       </Tabs>
+
+      {/* Recommended & Best Deals Discovery */}
+      {dealCourses.length > 0 && (
+        <Box mt={56}>
+          <Group justify="space-between" align="flex-end" mb="lg" wrap="wrap" gap="sm">
+            <div>
+              <Badge variant="light" color="teal" radius="xl" mb={6} leftSection={<IconSparkles size={13} />}>
+                Best Deals &amp; Next Skills
+              </Badge>
+              <Title order={3}>Recommended Courses With Top Discounts</Title>
+              <Text size="sm" c="dimmed" mt={2}>
+                Expand your skillset with our highest-value offers not yet in your library.
+              </Text>
+            </div>
+            <Button
+              component={Link}
+              to="/courses?sort=deals"
+              variant="light"
+              color="indigo"
+              rightSection={<IconArrowRight size={16} />}
+            >
+              Browse All Deals
+            </Button>
+          </Group>
+
+          <Box className="course-grid">
+            {dealCourses.map((course) => (
+              <CourseCard key={course._id} course={course} />
+            ))}
+          </Box>
+        </Box>
+      )}
     </Container>
   );
 }

@@ -1,5 +1,5 @@
+import { memo } from 'react';
 import { Card, Image, Badge, Text, Button, Group, Title, Divider, Box, Stack } from '@mantine/core';
-import { useReducedMotion } from '@mantine/hooks';
 import { Link } from 'react-router-dom';
 import { IconClock, IconArrowRight, IconUser } from '@tabler/icons-react';
 
@@ -12,8 +12,7 @@ const handleImgError = (e) => {
   e.currentTarget.src = FALLBACK_THUMB;
 };
 
-export default function CourseCard({ course, variant = 'catalog', onOpen = null }) {
-  const reducedMotion = useReducedMotion();
+function CourseCard({ course, variant = 'catalog', onOpen = null }) {
 
   if (variant === 'compact') {
     return (
@@ -57,25 +56,20 @@ export default function CourseCard({ course, variant = 'catalog', onOpen = null 
 
   const price = course.discountedPrice ?? course.price;
   const hasDiscount = course.discountedPrice != null && course.discountedPrice < course.price;
+  const percentOff = hasDiscount && course.price > 0
+    ? Math.round((1 - price / course.price) * 100)
+    : 0;
   const meta = [
     { icon: IconClock, label: course.duration || 'Self-paced' },
     { icon: IconUser, label: course.instructor || 'Expert mentor' },
   ];
-
-  const handlePointerMove = (e) => {
-    if (reducedMotion) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    e.currentTarget.style.setProperty('--spot-x', `${e.clientX - rect.left}px`);
-    e.currentTarget.style.setProperty('--spot-y', `${e.clientY - rect.top}px`);
-  };
 
   return (
     <Card
       withBorder
       radius="lg"
       p="lg"
-      className="card-hover spotlight-card"
-      onPointerMove={handlePointerMove}
+      className="card-hover"
       style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
     >
       <Card.Section mb="md" className="img-zoom">
@@ -84,6 +78,7 @@ export default function CourseCard({ course, variant = 'catalog', onOpen = null 
             src={course.thumbnail || FALLBACK_THUMB}
             onError={handleImgError}
             loading="lazy"
+            decoding="async"
             w="100%"
             h="100%"
             fit="cover"
@@ -133,14 +128,21 @@ export default function CourseCard({ course, variant = 'catalog', onOpen = null 
 
       {course.category?.name && (
         <Group justify="space-between" align="center" gap="xs" mb={4}>
-          <Text size="xs" fw={600} tt="uppercase" c="indigo">
+          <Text size="xs" fw={600} tt="uppercase" c="indigo" truncate>
             {course.category.name}
           </Text>
-          {course.isFeatured && (
-            <Badge variant="light" color="teal" size="xs" radius="sm">
-              Campus Pick
-            </Badge>
-          )}
+          <Group gap={4} wrap="nowrap">
+            {hasDiscount && percentOff > 0 && (
+              <Badge variant="filled" color="teal" size="xs" radius="sm" className="tabular-nums">
+                {percentOff}% OFF
+              </Badge>
+            )}
+            {course.isFeatured && (
+              <Badge variant="light" color="indigo" size="xs" radius="sm">
+                Campus Pick
+              </Badge>
+            )}
+          </Group>
         </Group>
       )}
       <Text size="lg" fw={700} lineClamp={2}>
@@ -179,3 +181,5 @@ export default function CourseCard({ course, variant = 'catalog', onOpen = null 
     </Card>
   );
 }
+
+export default memo(CourseCard);

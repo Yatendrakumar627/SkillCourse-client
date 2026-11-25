@@ -44,12 +44,20 @@ function EnrolledCourseCard({ data, onOpen }) {
         </Box>
       </Card.Section>
 
-      <Group gap="xs" wrap="wrap">
-        <Badge color="gray" variant="light" size="sm" radius="sm">{course.level}</Badge>
-        <Badge color="indigo" variant="light" size="sm" radius="sm">{course.duration}</Badge>
+      <Group gap="xs" wrap="wrap" justify="space-between">
+        <Group gap="xs" wrap="wrap">
+          <Badge color="teal" variant="light" size="sm" radius="sm">Enrolled</Badge>
+          <Badge color="gray" variant="light" size="sm" radius="sm">{course.level}</Badge>
+          <Badge color="indigo" variant="light" size="sm" radius="sm">{course.duration}</Badge>
+        </Group>
       </Group>
 
       <Text size="lg" fw={700} lineClamp={2} mt="xs">{course.title}</Text>
+      {course.instructor && (
+        <Text size="xs" c="dimmed" mt={2}>
+          Mentor: {course.instructor}
+        </Text>
+      )}
 
       <Stack gap={6} mt="sm" style={{ flexGrow: 1 }}>
         {upcomingDate && (
@@ -212,7 +220,7 @@ export default function StudentCourses({
         upcoming,
         assignCount,
         submitCount,
-        showProgress: assignCount > 0 && submitCount > 0,
+        showProgress: assignCount > 0,
       };
     });
 

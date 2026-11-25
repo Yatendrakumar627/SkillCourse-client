@@ -10,7 +10,16 @@ import App from './App.jsx';
 import theme from './theme';
 import './index.css';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 2 * 60 * 1000, // 2 minutes fresh cache across route transitions
+      gcTime: 10 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

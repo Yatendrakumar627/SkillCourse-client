@@ -4,7 +4,7 @@ import {
   Group, Button, Container, Text, Menu, Avatar, Box, ActionIcon, Indicator,
   useMantineColorScheme, ThemeIcon, Burger, Drawer, Stack, Divider, Badge,
 } from '@mantine/core';
-import { useDisclosure, useWindowScroll } from '@mantine/hooks';
+import { useDisclosure } from '@mantine/hooks';
 import { useAuthStore } from '../store/authStore';
 import { getNotificationsAPI, markNotificationReadAPI, markAllNotificationsReadAPI } from '../services/api';
 import {
@@ -38,9 +38,17 @@ export default function Header() {
   const [notifications, setNotifications] = useState([]);
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const [opened, { open, close }] = useDisclosure(false);
-  const [scroll] = useWindowScroll();
+  const [scrolled, setScrolled] = useState(false);
 
-  const scrolled = scroll.y > 4;
+  useEffect(() => {
+    const onScroll = () => {
+      const next = window.scrollY > 4;
+      setScrolled((prev) => (prev === next ? prev : next));
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const fetchNotifications = useCallback(async () => {
     if (!isAuthenticated) return;
@@ -132,6 +140,19 @@ export default function Header() {
               </Button>
             );
           })}
+          {isAuthenticated && (
+            <Button
+              variant="subtle"
+              component={Link}
+              to={dashboardTo}
+              leftSection={<IconDashboard size={16} />}
+              px="sm"
+              className="lms-nav-btn"
+              data-active={location.pathname === dashboardTo ? 'true' : undefined}
+            >
+              {dashboardLabel}
+            </Button>
+          )}
         </Group>
 
         <Group gap="sm" wrap="nowrap">
