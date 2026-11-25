@@ -1,0 +1,368 @@
+:root {
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+
+  --lms-surface-page: #f5f6f8;
+  --lms-surface-subtle: #f1f3f7;
+  --lms-surface-accent-soft: var(--mantine-color-indigo-0);
+  --lms-text-accent: var(--mantine-color-indigo-7);
+  --lms-divider-subtle: var(--mantine-color-gray-3);
+}
+
+[data-mantine-color-scheme='dark'] {
+  --lms-surface-page: #101113;
+  --lms-surface-subtle: var(--mantine-color-dark-8);
+  --lms-surface-accent-soft: rgba(92, 124, 250, 0.16);
+  --lms-text-accent: var(--mantine-color-indigo-3);
+  --lms-divider-subtle: var(--mantine-color-dark-4);
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100svh;
+  background-color: var(--lms-surface-page);
+}
+
+/* Cards and panels: solid body-colored surface (inline styles still win over these) */
+.mantine-Card-root,
+.mantine-Paper-root {
+  background-color: var(--mantine-color-body);
+}
+
+/* Containers: centered content with responsive horizontal padding */
+.mantine-Container-root {
+  padding-inline: 24px;
+}
+@media (max-width: 991px) {
+  .mantine-Container-root {
+    padding-inline: 22px;
+  }
+}
+@media (max-width: 640px) {
+  .mantine-Container-root {
+    padding-inline: 16px;
+  }
+}
+
+/* Fluid page container — app-wide, centered, responsive padding */
+.lms-container {
+  width: 100%;
+  max-width: 1280px;
+  margin-inline: auto;
+  padding-inline: clamp(16px, 3vw, 32px);
+  box-sizing: border-box;
+}
+
+/* Responsive course grid — auto-fits readable cards without stretching */
+.course-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 24px;
+}
+
+#root {
+  width: 100%;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+/* Selection */
+::selection {
+  background: rgba(99, 102, 241, 0.25);
+}
+
+/* Scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--mantine-color-gray-4) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: var(--mantine-color-gray-4);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--mantine-color-gray-5);
+  background-clip: content-box;
+}
+
+/* Brand utilities */
+.brand-gradient {
+  background-color: var(--mantine-primary-color-filled);
+}
+
+/* Card hover lift */
+.card-hover {
+  transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--mantine-shadow-lift);
+}
+
+/* Card CTA — fills solid indigo when the card is hovered */
+.card-cta {
+  transition: background-color 150ms ease, color 150ms ease;
+}
+.card-hover:hover .card-cta {
+  background-color: var(--mantine-primary-color-filled) !important;
+  color: var(--mantine-color-white) !important;
+}
+
+/* Page shell rhythm — consistent vertical padding for content pages */
+.page-shell {
+  padding: 40px 0;
+}
+@media (max-width: 768px) {
+  .page-shell {
+    padding: 24px 0;
+  }
+}
+
+/* Page/section rhythm alt for marketing pages */
+.section {
+  padding: 64px 0;
+}
+@media (max-width: 768px) {
+  .section {
+    padding: 40px 0;
+  }
+}
+
+/* Sticky side card */
+.sticky-side {
+  position: sticky;
+  top: 88px;
+}
+
+/* Sticky bar under the fixed header */
+.sticky-bar {
+  position: sticky;
+  top: 64px;
+  z-index: 60;
+}
+@media (max-width: 768px) {
+  .sticky-bar {
+    position: static;
+  }
+}
+
+/* Horizontal scrollable tabs (mobile) — no awkward wrapping */
+.tabs-scroll {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.tabs-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar (horizontal chip rails) */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+/* Skeleton shimmer */
+.skeleton-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    transparent 0,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 100%
+  );
+  animation: shimmer 1.6s infinite;
+}
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Image zoom on hover */
+.img-zoom {
+  overflow: hidden;
+}
+.img-zoom img {
+  transition: transform 200ms ease;
+}
+.img-zoom:hover img {
+  transform: scale(1.06);
+}
+
+/* Table scroll wrapper */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ===== Full-bleed hero ===== */
+.hero {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: linear-gradient(
+    135deg,
+    var(--mantine-color-indigo-9) 0%,
+    var(--mantine-color-indigo-7) 55%,
+    var(--mantine-color-indigo-5) 100%
+  );
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -32%;
+  right: -10%;
+  width: 680px;
+  height: 680px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0) 62%);
+  pointer-events: none;
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: -42%;
+  left: -8%;
+  width: 560px;
+  height: 560px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(120, 96, 255, 0.7), rgba(120, 96, 255, 0) 68%);
+  pointer-events: none;
+}
+.hero-inner {
+  position: relative;
+  z-index: 1;
+}
+
+/* Glassmorphism surface */
+.hero-glass {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 18px 60px -24px rgba(0, 0, 0, 0.55);
+}
+.hero-sheen {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.05) 38%, rgba(255, 255, 255, 0) 58%);
+}
+
+/* Gentle float for hero shapes */
+@keyframes hero-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+.hero-float {
+  animation: hero-float 7s ease-in-out infinite;
+}
+
+/* Hero search input bar */
+.hero-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 540px;
+  width: 100%;
+  padding: 6px 6px 6px 10px;
+  border-radius: var(--mantine-radius-lg);
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+.hero-search:focus-within {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+.hero-search input::placeholder {
+  color: rgba(255, 255, 255, 0.65);
+}
+.hero-search .mantine-Input-input {
+  color: white;
+}
+
+/* Header nav buttons (replaces unsupported Emotion pseudo-selectors in Mantine v9) */
+.lms-nav-btn {
+  color: var(--mantine-color-dimmed);
+  font-weight: 500;
+  font-size: 14px;
+  border-radius: var(--mantine-radius-sm);
+  transition: background-color 150ms ease, color 150ms ease;
+}
+.lms-nav-btn:hover {
+  color: var(--mantine-color-text);
+  background-color: var(--mantine-color-default-hover);
+}
+.lms-nav-btn[data-active='true'] {
+  color: var(--lms-text-accent);
+  font-weight: 600;
+  background-color: var(--lms-surface-accent-soft);
+}
+.lms-nav-btn[data-active='true']:hover {
+  color: var(--lms-text-accent);
+  background-color: var(--lms-surface-accent-soft);
+}
+
+/* Dashboard tabs */
+.lms-tab {
+  font-size: 14px;
+}
+.lms-tab[data-active] {
+  font-weight: 700;
+}
+
+/* Footer link hover */
+.lms-footer-link {
+  text-decoration: none;
+  width: fit-content;
+  transition: color 150ms ease;
+}
+.lms-footer-link:hover {
+  color: var(--lms-text-accent) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
