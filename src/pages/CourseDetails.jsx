@@ -207,24 +207,25 @@ export default function CourseDetails() {
   return (
     <>
       {/* PREMIUM HERO BANNER */}
-      <div
+      <Box
+        className="hero"
         style={{
-          backgroundColor: 'var(--mantine-color-indigo-9)',
           color: 'white',
-          padding: '28px 0 52px',
-          marginBottom: '48px',
+          padding: '28px 0 48px',
+          marginBottom: '44px',
         }}
       >
-        <Container size="lg" className="lms-container">
+        <div className="hero-grid" />
+        <Container size="lg" className="lms-container hero-inner">
           <Breadcrumbs
-            mb="xl"
-            separator={<Text size="sm" style={{ color: 'rgba(255,255,255,0.4)' }}>/</Text>}
+            mb="lg"
+            separator={<Text size="sm" style={{ color: 'rgba(255,255,255,0.45)' }}>/</Text>}
           >
             <Text
               component={Link}
               to="/"
               size="sm"
-              style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}
+              style={{ color: 'rgba(255,255,255,0.75)', textDecoration: 'none' }}
             >
               Home
             </Text>
@@ -232,7 +233,7 @@ export default function CourseDetails() {
               component={Link}
               to="/courses"
               size="sm"
-              style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}
+              style={{ color: 'rgba(255,255,255,0.75)', textDecoration: 'none' }}
             >
               Courses
             </Text>
@@ -241,76 +242,107 @@ export default function CourseDetails() {
             </Text>
           </Breadcrumbs>
 
-          <Grid align="flex-start" gutter="xl">
+          <Grid align="center" gutter="xl">
             <Grid.Col span={{ base: 12, md: 7 }}>
-              <Group gap="sm" mb="md">
-                <Badge color="indigo" variant="light" size="lg" radius="sm" style={{ background: 'rgba(255,255,255,0.12)', color: 'white', border: '1px solid rgba(255,255,255,0.25)' }}>
+              <Group gap="xs" mb="md" wrap="wrap">
+                <Badge variant="light" size="md" radius="sm" style={{ background: 'rgba(255,255,255,0.14)', color: 'white', border: '1px solid rgba(255,255,255,0.25)' }}>
                   {course.category?.name || 'Live Class'}
                 </Badge>
-                <Badge color="gray" variant="light" size="lg" radius="sm" style={{ background: 'rgba(255,255,255,0.12)', color: 'white', border: '1px solid rgba(255,255,255,0.25)' }}>
+                <Badge variant="light" size="md" radius="sm" style={{ background: 'rgba(255,255,255,0.14)', color: 'white', border: '1px solid rgba(255,255,255,0.25)' }}>
                   {course.level}
                 </Badge>
+                {modules.length > 0 && (
+                  <Badge variant="light" size="md" radius="sm" style={{ background: 'rgba(45,212,191,0.18)', color: '#99f6e4', border: '1px solid rgba(45,212,191,0.35)' }}>
+                    {modules.length} Modules
+                  </Badge>
+                )}
               </Group>
-              <Title order={1} style={{ fontSize: 'clamp(1.75rem, 3.2vw, 2.6rem)', fontWeight: 800, lineHeight: 1.12, color: 'white' }}>
+              <Title order={1} style={{ fontSize: 'clamp(1.85rem, 3.4vw, 2.75rem)', fontWeight: 700, lineHeight: 1.12, color: 'white', letterSpacing: '-0.02em' }}>
                 {course.title}
               </Title>
-              <Text size="xl" mt="lg" style={{ color: 'rgba(255, 255, 255, 0.82)', maxWidth: 600, lineHeight: 1.55 }}>
+              <Text size="lg" mt="md" style={{ color: 'rgba(255, 255, 255, 0.88)', maxWidth: 600, lineHeight: 1.6 }}>
                 {course.shortDescription}
               </Text>
 
-              <Group mt="xl" gap="lg" wrap="wrap">
-                {heroMeta.map((item) => {
-                  const MIcon = item.icon;
-                  return (
-                    <Group key={item.label} gap="xs" align="flex-start" wrap="nowrap" style={{ minWidth: 130 }}>
-                      <ThemeIcon size={40} radius="md" variant="filled" color="white" style={{ background: 'rgba(255,255,255,0.14)', color: 'white', flexShrink: 0 }}>
-                        <MIcon size={20} />
-                      </ThemeIcon>
-                      <div>
-                        <Text size="xs" tt="uppercase" fw={700} style={{ color: 'rgba(255,255,255,0.65)' }}>
-                          {item.label}
-                        </Text>
-                        <Text size="md" fw={600} c="white" style={{ lineHeight: 1.3 }}>
-                          {item.value || '—'}
-                        </Text>
-                      </div>
-                    </Group>
-                  );
-                })}
-              </Group>
+              <Box
+                className="hero-glass"
+                mt="xl"
+                p="md"
+                style={{ borderRadius: 16 }}
+              >
+                <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">
+                  {heroMeta.map((item) => {
+                    const MIcon = item.icon;
+                    return (
+                      <Group key={item.label} gap="xs" align="flex-start" wrap="nowrap" style={{ minWidth: 0 }}>
+                        <ThemeIcon size={34} radius="md" variant="filled" style={{ background: 'rgba(255,255,255,0.16)', color: 'white', flexShrink: 0 }}>
+                          <MIcon size={18} />
+                        </ThemeIcon>
+                        <div style={{ minWidth: 0 }}>
+                          <Text size="xs" tt="uppercase" fw={700} style={{ color: 'rgba(255,255,255,0.68)', fontSize: 10 }}>
+                            {item.label}
+                          </Text>
+                          <Text size="sm" fw={600} c="white" truncate style={{ lineHeight: 1.3 }}>
+                            {item.value || '—'}
+                          </Text>
+                        </div>
+                      </Group>
+                    );
+                  })}
+                </SimpleGrid>
+              </Box>
             </Grid.Col>
 
             {/* Enrollment / Pricing card */}
             <Grid.Col span={{ base: 12, md: 5 }}>
-              <Card shadow="lg" radius="lg" withBorder className="sticky-side" style={{ backgroundColor: 'var(--mantine-color-body)' }}>
+              <Card shadow="xl" radius="lg" withBorder style={{ backgroundColor: 'var(--mantine-color-body)' }}>
                 <Card.Section>
-                  <Image
-                    src={course.thumbnail || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=500'}
-                    height={200}
-                    alt={course.title}
-                  />
+                  <Box style={{ aspectRatio: '16/9', position: 'relative', overflow: 'hidden' }}>
+                    <Image
+                      src={course.thumbnail || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600'}
+                      onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600'; }}
+                      decoding="async"
+                      w="100%"
+                      h="100%"
+                      fit="cover"
+                      alt={course.title}
+                    />
+                    <Box
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'linear-gradient(180deg, rgba(0,0,0,0) 45%, rgba(0,0,0,0.45) 100%)',
+                      }}
+                    />
+                    <Badge
+                      variant="filled"
+                      size="sm"
+                      radius="sm"
+                      style={{ position: 'absolute', bottom: 12, left: 12, background: 'rgba(0,0,0,0.65)' }}
+                    >
+                      Live Cohort · UPI QR Enabled
+                    </Badge>
+                  </Box>
                 </Card.Section>
 
                 <Group justify="space-between" align="flex-start" mt="lg" wrap="nowrap">
                   <div style={{ minWidth: 0 }}>
-                    <Group gap={10} align="baseline" wrap="nowrap">
-                      <Text fw={800} style={{ fontSize: '2rem', color: 'var(--mantine-color-indigo-6)', lineHeight: 1 }}>
-                        ₹{price}
+                    <Group gap={10} align="baseline" wrap="nowrap" className="tabular-nums">
+                      <Text fw={800} style={{ fontSize: '2.1rem', color: 'var(--mantine-color-indigo-6)', lineHeight: 1 }}>
+                        {price === 0 ? 'Free' : `₹${Number(price).toLocaleString('en-IN')}`}
                       </Text>
                       {hasDiscount && (
                         <Text size="md" c="dimmed" td="line-through">
-                          ₹{course.price}
+                          ₹{Number(course.price).toLocaleString('en-IN')}
                         </Text>
                       )}
                     </Group>
-                    {hasDiscount && (
-                      <Text size="xs" c="green" fw={700} mt={2}>
-                        Save ₹{saved}
-                      </Text>
-                    )}
+                    <Text size="xs" c={hasDiscount ? 'teal' : 'dimmed'} fw={600} mt={4}>
+                      {hasDiscount ? `Save ₹${Number(saved).toLocaleString('en-IN')} (${percentOff}% OFF)` : 'One-time cohort fee · Full access'}
+                    </Text>
                   </div>
                   {hasDiscount && (
-                    <Badge color="teal" variant="light" size="md" radius="sm">
+                    <Badge color="teal" variant="light" size="md" radius="sm" className="tabular-nums">
                       {percentOff}% OFF
                     </Badge>
                   )}
@@ -322,6 +354,7 @@ export default function CourseDetails() {
                       fullWidth
                       size="lg"
                       color="indigo"
+                      className="btn-shine"
                       component={Link}
                       to="/login"
                       radius="md"
@@ -365,6 +398,7 @@ export default function CourseDetails() {
                         fullWidth
                         size="lg"
                         color="indigo"
+                        className="btn-shine"
                         onClick={() => setModalOpen(true)}
                         radius="md"
                         rightSection={<IconArrowRight size={18} />}
@@ -375,12 +409,13 @@ export default function CourseDetails() {
                   ) : (
                     <Stack gap={8}>
                       <Text size="xs" c="dimmed" ta="center">
-                        Manual payment via UPI / Bank — verified by our team.
+                        Pay via Dynamic UPI QR or Bank Transfer
                       </Text>
                       <Button
                         fullWidth
                         size="lg"
                         color="indigo"
+                        className="btn-shine"
                         onClick={() => setModalOpen(true)}
                         radius="md"
                         rightSection={<IconArrowRight size={18} />}
@@ -405,7 +440,7 @@ export default function CourseDetails() {
             </Grid.Col>
           </Grid>
         </Container>
-      </div>
+      </Box>
 
       <Container size="lg" className="lms-container" py="lg" style={{ textAlign: 'left' }}>
         <Grid gutter="40px">
@@ -488,6 +523,54 @@ export default function CourseDetails() {
                 <List.Item>Willingness to learn and actively participate in live sessions.</List.Item>
               </List>
             </Paper>
+          </Grid.Col>
+
+          {/* Sticky Quick-Action & Support Sidebar alongside syllabus */}
+          <Grid.Col span={{ base: 12, md: 4 }} visibleFrom="md">
+            <Stack gap="md" className="sticky-side">
+              <Paper withBorder p="lg" radius="lg" shadow="sm">
+                <Text size="xs" tt="uppercase" fw={700} c="dimmed">Cohort Enrollment</Text>
+                <Text fw={700} size="md" mt={4} lineClamp={2}>{course.title}</Text>
+                <Group gap={8} align="baseline" mt="sm" className="tabular-nums">
+                  <Text fw={800} size="xl" c="indigo">
+                    {price === 0 ? 'Free' : `₹${Number(price).toLocaleString('en-IN')}`}
+                  </Text>
+                  {hasDiscount && (
+                    <Text size="sm" c="dimmed" td="line-through">
+                      ₹{Number(course.price).toLocaleString('en-IN')}
+                    </Text>
+                  )}
+                </Group>
+                <Button
+                  fullWidth
+                  mt="md"
+                  color={enrollmentStatus === 'approved' ? 'teal' : 'indigo'}
+                  component={!isAuthenticated || enrollmentStatus === 'approved' ? Link : undefined}
+                  to={!isAuthenticated ? '/login' : enrollmentStatus === 'approved' ? '/dashboard' : undefined}
+                  disabled={enrollmentStatus === 'pending'}
+                  onClick={isAuthenticated && enrollmentStatus !== 'approved' && enrollmentStatus !== 'pending' ? () => setModalOpen(true) : undefined}
+                  rightSection={<IconArrowRight size={16} />}
+                >
+                  {!isAuthenticated
+                    ? 'Login to Enroll'
+                    : enrollmentStatus === 'approved'
+                      ? 'Go to Dashboard'
+                      : enrollmentStatus === 'pending'
+                        ? 'Verification Pending'
+                        : 'Enroll via UPI QR'}
+                </Button>
+              </Paper>
+
+              <Paper withBorder p="lg" radius="lg" style={{ background: 'var(--lms-surface-subtle)' }}>
+                <Text fw={700} size="sm">Need Syllabus or Campus Help?</Text>
+                <Text size="xs" c="dimmed" mt={4}>
+                  Talk to our New Delhi counselor team at <strong>+91 98994 15841</strong> or send a message.
+                </Text>
+                <Button component={Link} to="/contact" variant="default" size="xs" fullWidth mt="md">
+                  Contact Support
+                </Button>
+              </Paper>
+            </Stack>
           </Grid.Col>
         </Grid>
 
