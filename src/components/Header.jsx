@@ -99,12 +99,12 @@ export default function Header() {
   return (
     <Box
       component="header"
+      className="lms-header"
       style={{
         borderBottom: '1px solid var(--mantine-color-default-border)',
-        backgroundColor: 'var(--mantine-color-body)',
         position: 'sticky',
         top: 0,
-        transition: 'box-shadow 150ms ease',
+        transition: 'box-shadow 150ms ease, background-color 150ms ease',
         boxShadow: scrolled ? 'var(--mantine-shadow-sm)' : 'none',
         zIndex: 100,
         width: '100%',

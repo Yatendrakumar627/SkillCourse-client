@@ -100,6 +100,11 @@ export const deleteCategoryAPI = async (id) => {
 };
 
 // --- PAYMENTS API ---
+export const getPaymentConfigAPI = async () => {
+  const { data } = await API.get('/payments/config');
+  return data;
+};
+
 export const submitPaymentAPI = async (formData) => {
   // formData should be multipart/form-data containing 'course', 'amount', 'screenshot'
   const { data } = await API.post('/payments/submit', formData, {

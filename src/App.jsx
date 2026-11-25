@@ -1,4 +1,5 @@
-import { Routes, Route, Navigate, Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { Container, Button } from '@mantine/core';
 import Header from './components/Header.jsx';
 import Footer from './components/Footer.jsx';
@@ -29,9 +30,18 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   return children;
 };
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
+
 function App() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', width: '100%' }}>
+      <ScrollToTop />
       <Header />
       <main style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', width: '100%' }}>
         <Routes>

@@ -70,14 +70,14 @@ export default function Register() {
           <form onSubmit={handleSubmit(onSubmit)}>
             <TextInput
               label="Full Name"
-              placeholder="John Doe"
+              placeholder="Aarav Sharma"
               required
               {...register('name')}
               mb="md"
             />
             <TextInput
               label="Email"
-              placeholder="you@email.com"
+              placeholder="you@example.com"
               type="email"
               required
               {...register('email')}
@@ -85,7 +85,7 @@ export default function Register() {
             />
             <TextInput
               label="Phone"
-              placeholder="1234567890"
+              placeholder="+91 98765 43210"
               {...register('phone')}
               mb="md"
             />

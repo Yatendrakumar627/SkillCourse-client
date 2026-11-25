@@ -6,17 +6,17 @@ const theme = createTheme({
   defaultRadius: 'md',
 
   fontFamily:
-    "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    "'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
   fontFamilyMonospace:
     "ui-monospace, 'Cascadia Code', 'SF Mono', Consolas, monospace",
   fontSmoothing: true,
 
   headings: {
     fontFamily:
-      "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+      "'Space Grotesk', 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
     sizes: {
-      h1: { fontSize: rem(32), lineHeight: 1.2, fontWeight: 750 },
-      h2: { fontSize: rem(20), lineHeight: 1.3, fontWeight: 700 },
+      h1: { fontSize: rem(34), lineHeight: 1.15, fontWeight: 700 },
+      h2: { fontSize: rem(22), lineHeight: 1.25, fontWeight: 700 },
       h3: { fontSize: rem(18), lineHeight: 1.35, fontWeight: 700 },
       h4: { fontSize: rem(16), lineHeight: 1.4, fontWeight: 600 },
     },

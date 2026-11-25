@@ -1,23 +1,30 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import QRCode from 'qrcode';
 import {
   Container, Title, Text, Grid, Card, Image, Button, Group, Badge, Modal,
   FileInput, Alert, Stack, TextInput, Accordion, Paper, ThemeIcon, List,
-  Breadcrumbs, Stepper, Divider, SimpleGrid,
+  Breadcrumbs, Stepper, Box, SimpleGrid, Tabs, CopyButton, ActionIcon,
+  Tooltip, Center,
 } from '@mantine/core';
-import { getCourseDetailsAPI, submitPaymentAPI, getMyEnrollmentsAPI, getModulesAPI } from '../services/api';
+import {
+  getCourseDetailsAPI, submitPaymentAPI, getMyEnrollmentsAPI, getModulesAPI, getPaymentConfigAPI,
+} from '../services/api';
 import { useAuthStore } from '../store/authStore';
 import {
   IconUpload, IconHourglassHigh, IconCheck, IconInfoCircle, IconCode,
   IconClock, IconLanguage, IconUser, IconTrophy, IconArrowRight, IconArrowLeft,
+  IconQrcode, IconBuildingBank, IconCopy, IconExternalLink,
 } from '@tabler/icons-react';
 import LoadingState from '../components/ui/LoadingState';
 import SectionHeader from '../components/ui/SectionHeader';
 import { notifySuccess } from '../utils/toast';
 
+const UTR_REGEX = /^[A-Za-z0-9]{8,30}$/;
+
 export default function CourseDetails() {
   const { slug } = useParams();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const [course, setCourse] = useState(null);
   const [enrollmentStatus, setEnrollmentStatus] = useState(null); // 'none', 'pending', 'approved', 'rejected'
   const [rejectionReason, setRejectionReason] = useState('');
@@ -25,7 +32,11 @@ export default function CourseDetails() {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
+  const [paymentMethod, setPaymentMethod] = useState('upi');
+  const [paymentConfig, setPaymentConfig] = useState(null);
+  const [qrDataUrl, setQrDataUrl] = useState('');
   const [screenshot, setScreenshot] = useState(null);
+  const [screenshotPreview, setScreenshotPreview] = useState('');
   const [transactionId, setTransactionId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -73,12 +84,57 @@ export default function CourseDetails() {
     if (modalOpen) {
       setActiveStep(0);
       setErrorMessage('');
+      if (isAuthenticated && !paymentConfig) {
+        getPaymentConfigAPI()
+          .then((cfg) => setPaymentConfig(cfg))
+          .catch(() => {});
+      }
     }
-  }, [modalOpen]);
+  }, [modalOpen, isAuthenticated, paymentConfig]);
+
+  useEffect(() => {
+    if (!screenshot) {
+      setScreenshotPreview('');
+      return undefined;
+    }
+    const url = URL.createObjectURL(screenshot);
+    setScreenshotPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [screenshot]);
+
+  const price = course ? (course.discountedPrice || course.price) : 0;
+  const referenceNote = useMemo(() => {
+    if (!course) return '';
+    const coursePart = course._id?.slice(-4)?.toUpperCase() || 'CRS';
+    const userPart = user?._id?.slice(-4)?.toUpperCase() || 'USR';
+    return `SC-${coursePart}-${userPart}`;
+  }, [course, user]);
+
+  const upiId = paymentConfig?.upiId || 'pay@skillcourse';
+  const upiName = paymentConfig?.upiName || 'SkillCourse Education';
+  const upiUri = useMemo(() => {
+    if (!course) return '';
+    const params = new URLSearchParams({
+      pa: upiId,
+      pn: upiName,
+      am: Number(price).toFixed(2),
+      cu: 'INR',
+      tn: referenceNote,
+    });
+    return `upi://pay?${params.toString()}`;
+  }, [course, upiId, upiName, price, referenceNote]);
+
+  useEffect(() => {
+    if (!modalOpen || !upiUri) return;
+    QRCode.toDataURL(upiUri, { width: 200, margin: 1, errorCorrectionLevel: 'H' })
+      .then((url) => setQrDataUrl(url))
+      .catch(() => setQrDataUrl(''));
+  }, [modalOpen, upiUri]);
 
   const handlePaymentSubmit = async () => {
-    if (!transactionId.trim()) {
-      setErrorMessage('Transaction ID is required');
+    const cleanTx = transactionId.trim().toUpperCase();
+    if (!UTR_REGEX.test(cleanTx)) {
+      setErrorMessage('Enter a valid 8–30 character UTR / Transaction Reference ID');
       return;
     }
     if (!screenshot) {
@@ -91,8 +147,7 @@ export default function CourseDetails() {
     try {
       const formData = new FormData();
       formData.append('course', course._id);
-      formData.append('amount', course.discountedPrice || course.price);
-      formData.append('transactionId', transactionId.trim());
+      formData.append('transactionId', cleanTx);
       formData.append('screenshot', screenshot);
 
       await submitPaymentAPI(formData);
@@ -121,7 +176,6 @@ export default function CourseDetails() {
     );
   }
 
-  const price = course.discountedPrice || course.price;
   const hasDiscount = !!course.discountedPrice && course.discountedPrice < course.price;
   const percentOff = hasDiscount ? Math.round((1 - course.discountedPrice / course.price) * 100) : 0;
   const saved = hasDiscount ? course.price - course.discountedPrice : 0;
@@ -147,9 +201,8 @@ export default function CourseDetails() {
     },
   ];
 
-  const stepNextDisabled =
-    (activeStep === 1 && !transactionId.trim()) ||
-    (activeStep === 2 && !screenshot);
+  const isValidUtr = UTR_REGEX.test(transactionId.trim());
+  const stepNextDisabled = activeStep === 1 && (!isValidUtr || !screenshot);
 
   return (
     <>
@@ -438,7 +491,7 @@ export default function CourseDetails() {
           </Grid.Col>
         </Grid>
 
-        {/* Manual Payment Modal — 4-step flow */}
+        {/* Enhanced 3-Step UPI QR + Proof Checkout Modal */}
         <Modal
           opened={modalOpen}
           onClose={() => setModalOpen(false)}
@@ -446,9 +499,8 @@ export default function CourseDetails() {
           size="lg"
           overlayProps={{ blur: 3 }}
         >
-          <Text size="sm" c="dimmed" mb="lg">
-            Enroll in <strong>{course.title}</strong> by paying <strong>₹{price}</strong> via manual
-            transfer, then submit your proof below.
+          <Text size="sm" c="dimmed" mb="md">
+            Enroll in <strong>{course.title}</strong> for <strong>₹{price}</strong>. Pay via dynamic UPI QR or bank transfer, then upload your UTR &amp; receipt.
           </Text>
 
           <Stepper
@@ -456,70 +508,181 @@ export default function CourseDetails() {
             onStepClick={setActiveStep}
             allowNextStepsSelect={false}
             color="indigo"
-            size="xs"
-            styles={{ steps: { flexWrap: 'wrap', gap: 8 } }}
+            size="sm"
           >
-            {/* Step 1 */}
-            <Stepper.Step label="Payment Info" description="How to pay">
-              <Paper
-                withBorder
-                p="md"
-                radius="md"
-                style={{
-                  backgroundColor: 'var(--lms-surface-accent-soft)',
-                  borderLeft: '4px solid var(--mantine-color-indigo-6)',
-                }}
-              >
-                <Text fw={700} size="sm" style={{ color: 'var(--lms-text-accent)' }} mb={4}>Option 1: UPI Transfer</Text>
-                <Text size="sm" mb="sm">UPI ID: <strong>pay@skillcourse</strong></Text>
-                <Divider my="xs" />
-                <Text fw={700} size="sm" style={{ color: 'var(--lms-text-accent)' }} mb={4}>Option 2: Direct Bank Deposit</Text>
-                <Text size="sm">Bank: <strong>SkillCourse Education</strong></Text>
-                <Text size="sm">A/C Number: <strong>1234567890</strong></Text>
-                <Text size="sm">IFSC Code: <strong>SKILL0001</strong></Text>
-              </Paper>
-              <Text size="xs" c="dimmed" mt="md">
-                Use these details to transfer <strong>₹{price}</strong>. Keep the receipt ready — you will upload it in the next steps.
+            {/* Step 1: Pay via UPI QR, App Intent, or Bank Transfer */}
+            <Stepper.Step label="Pay" description={`₹${price}`}>
+              <Tabs value={paymentMethod} onChange={(val) => setPaymentMethod(val || 'upi')} mt="sm">
+                <Tabs.List grow>
+                  <Tabs.Tab value="upi" leftSection={<IconQrcode size={16} />}>
+                    UPI / QR (Instant)
+                  </Tabs.Tab>
+                  <Tabs.Tab value="bank" leftSection={<IconBuildingBank size={16} />}>
+                    Bank Transfer
+                  </Tabs.Tab>
+                </Tabs.List>
+
+                <Tabs.Panel value="upi" pt="md">
+                  <Paper withBorder p="md" radius="md" style={{ backgroundColor: 'var(--lms-surface-accent-soft)' }}>
+                    <Grid align="center" gutter="md">
+                      <Grid.Col span={{ base: 12, sm: 5 }}>
+                        <Center>
+                          <Paper withBorder p="xs" radius="md" style={{ background: '#ffffff', textAlign: 'center' }}>
+                            {qrDataUrl ? (
+                              <Image src={qrDataUrl} w={172} h={172} alt="Dynamic UPI Payment QR" />
+                            ) : (
+                              <Box w={172} h={172} />
+                            )}
+                            <Text size="xs" fw={700} c="dark" mt={4}>
+                              Scan to pay ₹{price}
+                            </Text>
+                          </Paper>
+                        </Center>
+                      </Grid.Col>
+                      <Grid.Col span={{ base: 12, sm: 7 }}>
+                        <Stack gap="xs">
+                          <Text size="xs" tt="uppercase" fw={700} style={{ color: 'var(--lms-text-accent)' }}>
+                            Amount &amp; Reference Auto-Filled
+                          </Text>
+                          <Group justify="space-between" wrap="nowrap">
+                            <Text size="sm">UPI ID: <strong>{upiId}</strong></Text>
+                            <CopyButton value={upiId}>
+                              {({ copied, copy }) => (
+                                <Tooltip label={copied ? 'Copied' : 'Copy UPI ID'}>
+                                  <ActionIcon variant="subtle" color={copied ? 'teal' : 'indigo'} onClick={copy}>
+                                    {copied ? <IconCheck size={15} /> : <IconCopy size={15} />}
+                                  </ActionIcon>
+                                </Tooltip>
+                              )}
+                            </CopyButton>
+                          </Group>
+                          <Group justify="space-between" wrap="nowrap">
+                            <Text size="sm">Exact Amount: <strong>₹{price}</strong></Text>
+                            <CopyButton value={String(price)}>
+                              {({ copied, copy }) => (
+                                <Tooltip label={copied ? 'Copied' : 'Copy Amount'}>
+                                  <ActionIcon variant="subtle" color={copied ? 'teal' : 'indigo'} onClick={copy}>
+                                    {copied ? <IconCheck size={15} /> : <IconCopy size={15} />}
+                                  </ActionIcon>
+                                </Tooltip>
+                              )}
+                            </CopyButton>
+                          </Group>
+                          <Group justify="space-between" wrap="nowrap">
+                            <Text size="sm">Note / Ref: <strong>{referenceNote}</strong></Text>
+                            <CopyButton value={referenceNote}>
+                              {({ copied, copy }) => (
+                                <Tooltip label={copied ? 'Copied' : 'Copy Note'}>
+                                  <ActionIcon variant="subtle" color={copied ? 'teal' : 'indigo'} onClick={copy}>
+                                    {copied ? <IconCheck size={15} /> : <IconCopy size={15} />}
+                                  </ActionIcon>
+                                </Tooltip>
+                              )}
+                            </CopyButton>
+                          </Group>
+                          <Button
+                            component="a"
+                            href={upiUri}
+                            color="indigo"
+                            variant="filled"
+                            size="sm"
+                            mt={4}
+                            rightSection={<IconExternalLink size={15} />}
+                          >
+                            Open UPI App (GPay / PhonePe / Paytm)
+                          </Button>
+                        </Stack>
+                      </Grid.Col>
+                    </Grid>
+                  </Paper>
+                </Tabs.Panel>
+
+                <Tabs.Panel value="bank" pt="md">
+                  <Paper
+                    withBorder
+                    p="md"
+                    radius="md"
+                    style={{
+                      backgroundColor: 'var(--lms-surface-accent-soft)',
+                      borderLeft: '4px solid var(--mantine-color-indigo-6)',
+                    }}
+                  >
+                    <Stack gap="xs">
+                      <Text size="sm">
+                        Account Name: <strong>{paymentConfig?.bankName || 'SkillCourse Education'}</strong>
+                      </Text>
+                      <Group justify="space-between" wrap="nowrap">
+                        <Text size="sm">
+                          A/C Number: <strong>{paymentConfig?.accountNumber || '1234567890'}</strong>
+                        </Text>
+                        <CopyButton value={paymentConfig?.accountNumber || '1234567890'}>
+                          {({ copied, copy }) => (
+                            <ActionIcon variant="subtle" color={copied ? 'teal' : 'indigo'} onClick={copy}>
+                              {copied ? <IconCheck size={15} /> : <IconCopy size={15} />}
+                            </ActionIcon>
+                          )}
+                        </CopyButton>
+                      </Group>
+                      <Group justify="space-between" wrap="nowrap">
+                        <Text size="sm">
+                          IFSC Code: <strong>{paymentConfig?.ifsc || 'SKILL0001'}</strong>
+                        </Text>
+                        <CopyButton value={paymentConfig?.ifsc || 'SKILL0001'}>
+                          {({ copied, copy }) => (
+                            <ActionIcon variant="subtle" color={copied ? 'teal' : 'indigo'} onClick={copy}>
+                              {copied ? <IconCheck size={15} /> : <IconCopy size={15} />}
+                            </ActionIcon>
+                          )}
+                        </CopyButton>
+                      </Group>
+                      <Text size="xs" c="dimmed">
+                        Add remark <strong>{referenceNote}</strong> while sending via IMPS / NEFT / RTGS.
+                      </Text>
+                    </Stack>
+                  </Paper>
+                </Tabs.Panel>
+              </Tabs>
+              <Text size="xs" c="dimmed" mt="sm">
+                After completing ₹{price} payment, copy the 12-digit UTR / Reference ID and click <strong>Next</strong>.
               </Text>
             </Stepper.Step>
 
-            {/* Step 2 */}
-            <Stepper.Step label="Transaction Details" description="Reference number">
-              <Stack gap="md">
+            {/* Step 2: UTR + Screenshot Proof together */}
+            <Stepper.Step label="Payment Proof" description="UTR & receipt">
+              <Stack gap="md" mt="sm">
                 <TextInput
-                  label="Transaction ID / Reference Number"
-                  placeholder="e.g. 123456789012"
+                  label="12-Digit UTR / Transaction Reference Number"
+                  placeholder="e.g. 412345678901"
+                  description="Find the 12-digit UTR in your GPay, PhonePe, Paytm, or bank SMS confirmation."
                   value={transactionId}
-                  onChange={(e) => setTransactionId(e.target.value)}
+                  onChange={(e) => setTransactionId(e.target.value.toUpperCase())}
+                  error={transactionId && !isValidUtr ? 'Use 8–30 letters/numbers (no spaces or symbols)' : ''}
                   required
                   radius="md"
                 />
-                <Text size="xs" c="dimmed">
-                  You can find this on the payment confirmation page, SMS, or your banking app after the transfer.
-                </Text>
-              </Stack>
-            </Stepper.Step>
-
-            {/* Step 3 */}
-            <Stepper.Step label="Upload Screenshot" description="Payment proof">
-              <Stack gap="md">
                 <FileInput
                   label="Payment Proof Screenshot"
-                  placeholder="Choose image file"
-                  accept="image/*"
+                  placeholder="Choose image file (JPG, PNG, WebP)"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
                   leftSection={<IconUpload size={16} />}
-                  description="Upload a clear screenshot of the transfer receipt."
+                  description="Upload a clear screenshot showing the UTR and ₹ amount (max 5 MB)."
                   value={screenshot}
                   onChange={setScreenshot}
                   required
                   radius="md"
                 />
+                {screenshotPreview && (
+                  <Paper withBorder p="xs" radius="md">
+                    <Text size="xs" c="dimmed" mb={6}>Receipt preview:</Text>
+                    <Image src={screenshotPreview} mah={160} fit="contain" radius="sm" alt="Receipt preview" />
+                  </Paper>
+                )}
               </Stack>
             </Stepper.Step>
 
-            {/* Step 4 */}
-            <Stepper.Step label="Submit" description="For verification">
-              <Stack gap="md">
+            {/* Step 3: Review & Confirm */}
+            <Stepper.Step label="Confirm" description="Verify & submit">
+              <Stack gap="md" mt="sm">
                 <Paper withBorder p="md" radius="md">
                   <Stack gap={8}>
                     <Group justify="space-between" wrap="nowrap">
@@ -531,8 +694,8 @@ export default function CourseDetails() {
                       <Text size="sm" fw={600}>₹{price}</Text>
                     </Group>
                     <Group justify="space-between" wrap="nowrap">
-                      <Text size="sm" c="dimmed">Transaction ID</Text>
-                      <Text size="sm" fw={600} truncate style={{ maxWidth: 260 }}>{transactionId}</Text>
+                      <Text size="sm" c="dimmed">UTR / Reference ID</Text>
+                      <Text size="sm" fw={600} truncate style={{ maxWidth: 260 }}>{transactionId.trim()}</Text>
                     </Group>
                     <Group justify="space-between" wrap="nowrap">
                       <Text size="sm" c="dimmed">Receipt</Text>
@@ -541,7 +704,9 @@ export default function CourseDetails() {
                   </Stack>
                 </Paper>
                 <Alert icon={<IconInfoCircle size={16} />} color="yellow" radius="md">
-                  Our support team reviews every payment manually. Most verifications complete within 1-2 hours.
+                  {paymentConfig?.autoVerifyEnabled
+                    ? 'Automated UTR verification is active. Your enrollment unlocks as soon as the bank credit matches.'
+                    : 'Our support team reviews every UTR and receipt manually. Most verifications complete within 1–2 hours.'}
                 </Alert>
               </Stack>
             </Stepper.Step>
@@ -565,14 +730,14 @@ export default function CourseDetails() {
                   Back
                 </Button>
               )}
-              {activeStep < 3 ? (
+              {activeStep < 2 ? (
                 <Button
                   color="indigo"
                   onClick={() => setActiveStep((s) => s + 1)}
                   disabled={stepNextDisabled}
                   rightSection={<IconArrowRight size={16} />}
                 >
-                  Next
+                  {activeStep === 0 ? 'I Have Paid — Next' : 'Next'}
                 </Button>
               ) : (
                 <Button

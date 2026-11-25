@@ -1,11 +1,11 @@
 import { Container, Text, Group, Box, Stack, ThemeIcon, SimpleGrid, Divider, ActionIcon } from '@mantine/core';
 import { Link } from 'react-router-dom';
-import { IconSchool, IconBrandFacebook, IconBrandInstagram, IconBrandTwitter, IconBrandYoutube } from '@tabler/icons-react';
+import { IconSchool, IconPhone, IconMail, IconBrandWhatsapp } from '@tabler/icons-react';
 
 const COURSE_LINKS = [
-  { label: 'Browse Courses', to: '/courses' },
-  { label: 'Live Classes', to: '/courses' },
-  { label: 'Certifications', to: '/courses' },
+  { label: 'Career & Campus Tracks', to: '/courses?category=career-productivity' },
+  { label: 'Data Science & AI', to: '/courses?category=data-science' },
+  { label: 'Full Stack by Language', to: '/courses?category=full-stack-development' },
 ];
 
 const COMPANY_LINKS = [
@@ -16,8 +16,8 @@ const COMPANY_LINKS = [
 
 const SUPPORT_LINKS = [
   { label: 'Help Center', to: '/contact' },
-  { label: 'Privacy Policy', to: '/contact' },
-  { label: 'Terms of Service', to: '/contact' },
+  { label: 'All Courses', to: '/courses' },
+  { label: 'Student Login', to: '/login' },
 ];
 
 export default function Footer() {
@@ -42,8 +42,10 @@ export default function Footer() {
               <Text size="lg" fw={700}>SkillCourse</Text>
             </Group>
             <Text size="sm" c="dimmed" style={{ maxWidth: 260 }}>
-              Learn through live cohorts, self-paced courses and real-world projects with
-              certified mentors.
+              Live mentor-led cohorts in New Delhi &amp; across India for students, faculty mentors, and developers.
+            </Text>
+            <Text size="xs" c="dimmed">
+              New Delhi, India · +91 98994 15841
             </Text>
           </Stack>
 
@@ -56,20 +58,40 @@ export default function Footer() {
 
         <Group justify="space-between" wrap="wrap" gap="sm">
           <Text size="sm" c="dimmed">
-            © {new Date().getFullYear()} SkillCourse LMS. All rights reserved.
+            © {new Date().getFullYear()} SkillCourse LMS · New Delhi, India. All rights reserved.
           </Text>
           <Group gap="xs" wrap="nowrap">
-            <ActionIcon variant="default" color="gray" radius="pill" aria-label="Facebook" component="a" href="#" onClick={(e) => e.preventDefault()}>
-              <IconBrandFacebook size={18} />
+            <ActionIcon
+              variant="default"
+              color="gray"
+              radius="pill"
+              aria-label="Call SkillCourse Support"
+              component="a"
+              href="tel:+919899415841"
+            >
+              <IconPhone size={17} />
             </ActionIcon>
-            <ActionIcon variant="default" color="gray" radius="pill" aria-label="Instagram" component="a" href="#" onClick={(e) => e.preventDefault()}>
-              <IconBrandInstagram size={18} />
+            <ActionIcon
+              variant="default"
+              color="gray"
+              radius="pill"
+              aria-label="WhatsApp SkillCourse Support"
+              component="a"
+              href="https://wa.me/919899415841"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <IconBrandWhatsapp size={17} />
             </ActionIcon>
-            <ActionIcon variant="default" color="gray" radius="pill" aria-label="Twitter" component="a" href="#" onClick={(e) => e.preventDefault()}>
-              <IconBrandTwitter size={18} />
-            </ActionIcon>
-            <ActionIcon variant="default" color="gray" radius="pill" aria-label="YouTube" component="a" href="#" onClick={(e) => e.preventDefault()}>
-              <IconBrandYoutube size={18} />
+            <ActionIcon
+              variant="default"
+              color="gray"
+              radius="pill"
+              aria-label="Email SkillCourse Support"
+              component="a"
+              href="mailto:support@skillcourse.com"
+            >
+              <IconMail size={17} />
             </ActionIcon>
           </Group>
         </Group>

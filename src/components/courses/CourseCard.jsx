@@ -1,17 +1,27 @@
 import { Card, Image, Badge, Text, Button, Group, Title, Divider, Box, Stack } from '@mantine/core';
+import { useReducedMotion } from '@mantine/hooks';
 import { Link } from 'react-router-dom';
 import { IconClock, IconArrowRight, IconUser } from '@tabler/icons-react';
 
 const FALLBACK_THUMB =
   'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600';
 
+const handleImgError = (e) => {
+  if (e.currentTarget.dataset.fallbackApplied) return;
+  e.currentTarget.dataset.fallbackApplied = 'true';
+  e.currentTarget.src = FALLBACK_THUMB;
+};
+
 export default function CourseCard({ course, variant = 'catalog', onOpen = null }) {
+  const reducedMotion = useReducedMotion();
+
   if (variant === 'compact') {
     return (
       <Card withBorder radius="lg" p="md" className="card-hover" style={{ height: '100%' }}>
         <Group align="flex-start" gap="md" wrap="nowrap">
           <Image
             src={course.thumbnail || FALLBACK_THUMB}
+            onError={handleImgError}
             width={88}
             height={88}
             radius="md"
@@ -45,24 +55,40 @@ export default function CourseCard({ course, variant = 'catalog', onOpen = null 
     );
   }
 
-  const price = course.discountedPrice || course.price;
-  const hasDiscount = !!course.discountedPrice && course.discountedPrice < course.price;
+  const price = course.discountedPrice ?? course.price;
+  const hasDiscount = course.discountedPrice != null && course.discountedPrice < course.price;
   const meta = [
     { icon: IconClock, label: course.duration || 'Self-paced' },
     { icon: IconUser, label: course.instructor || 'Expert mentor' },
   ];
+
+  const handlePointerMove = (e) => {
+    if (reducedMotion) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    e.currentTarget.style.setProperty('--spot-x', `${e.clientX - rect.left}px`);
+    e.currentTarget.style.setProperty('--spot-y', `${e.clientY - rect.top}px`);
+  };
 
   return (
     <Card
       withBorder
       radius="lg"
       p="lg"
-      className="card-hover"
+      className="card-hover spotlight-card"
+      onPointerMove={handlePointerMove}
       style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
     >
       <Card.Section mb="md" className="img-zoom">
         <Box style={{ aspectRatio: '16/10', position: 'relative' }}>
-          <Image src={course.thumbnail || FALLBACK_THUMB} w="100%" h="100%" fit="cover" alt={course.title} />
+          <Image
+            src={course.thumbnail || FALLBACK_THUMB}
+            onError={handleImgError}
+            loading="lazy"
+            w="100%"
+            h="100%"
+            fit="cover"
+            alt={course.title}
+          />
           <Box
             style={{
               position: 'absolute',
@@ -90,11 +116,13 @@ export default function CourseCard({ course, variant = 'catalog', onOpen = null 
               color="dark"
               styles={{ root: { background: 'rgba(0,0,0,0.6)', border: 'none' } }}
             >
-              <Group gap={6} align="baseline" wrap="nowrap">
-                <Text span fw={800} c="white" size="sm">₹{price}</Text>
+              <Group gap={6} align="baseline" wrap="nowrap" className="tabular-nums">
+                <Text span fw={800} c="white" size="sm">
+                  {price === 0 ? 'Free' : `₹${Number(price).toLocaleString('en-IN')}`}
+                </Text>
                 {hasDiscount && (
                   <Text span size="xs" td="line-through" style={{ color: 'rgba(255,255,255,0.65)' }}>
-                    ₹{course.price}
+                    ₹{Number(course.price).toLocaleString('en-IN')}
                   </Text>
                 )}
               </Group>
