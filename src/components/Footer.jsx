@@ -1,4 +1,4 @@
-import { Container, Text, Group, Box, Stack, ThemeIcon, SimpleGrid, Divider, ActionIcon } from '@mantine/core';
+import { Container, Text, Group, Box, Stack, ThemeIcon, SimpleGrid, Grid, Divider, ActionIcon } from '@mantine/core';
 import { Link } from 'react-router-dom';
 import { IconSchool, IconPhone, IconMail, IconBrandWhatsapp } from '@tabler/icons-react';
 
@@ -33,26 +33,32 @@ export default function Footer() {
       }}
     >
       <Container size="lg" className="lms-container">
-        <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="xl">
-          <Stack gap="sm">
-            <Group gap="xs" wrap="nowrap">
-              <ThemeIcon size={34} radius="md" className="brand-gradient">
-                <IconSchool size={20} />
-              </ThemeIcon>
-              <Text size="lg" fw={700}>SkillCourse</Text>
-            </Group>
-            <Text size="sm" c="dimmed" style={{ maxWidth: 260 }}>
-              Live mentor-led cohorts in New Delhi &amp; across India for students, faculty mentors, and developers.
-            </Text>
-            <Text size="xs" c="dimmed">
-              New Delhi, India · +91 98994 15841
-            </Text>
-          </Stack>
+        <Grid gutter="xl">
+          <Grid.Col span={{ base: 12, md: 4 }}>
+            <Stack gap="sm">
+              <Group gap="xs" wrap="nowrap">
+                <ThemeIcon size={34} radius="md" className="brand-gradient">
+                  <IconSchool size={20} />
+                </ThemeIcon>
+                <Text size="lg" fw={700}>SkillCourse</Text>
+              </Group>
+              <Text size="sm" c="dimmed" style={{ maxWidth: 280 }}>
+                Live mentor-led cohorts in New Delhi &amp; across India for students, faculty mentors, and developers.
+              </Text>
+              <Text size="xs" c="dimmed" fw={500}>
+                New Delhi, India · +91 98994 15841
+              </Text>
+            </Stack>
+          </Grid.Col>
 
-          <FooterColumn title="Courses" links={COURSE_LINKS} />
-          <FooterColumn title="Company" links={COMPANY_LINKS} />
-          <FooterColumn title="Support" links={SUPPORT_LINKS} />
-        </SimpleGrid>
+          <Grid.Col span={{ base: 12, md: 8 }}>
+            <SimpleGrid cols={{ base: 2, sm: 3 }} spacing="lg">
+              <FooterColumn title="Courses" links={COURSE_LINKS} />
+              <FooterColumn title="Company" links={COMPANY_LINKS} />
+              <FooterColumn title="Support" links={SUPPORT_LINKS} />
+            </SimpleGrid>
+          </Grid.Col>
+        </Grid>
 
         <Divider my="lg" />
 

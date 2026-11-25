@@ -131,23 +131,23 @@ body {
   color: var(--mantine-color-white) !important;
 }
 
-/* Page shell rhythm — consistent vertical padding for content pages */
+/* Page shell rhythm — consistent vertical padding without clobbering container inline padding */
 .page-shell {
-  padding: 40px 0;
+  padding-block: 40px;
 }
 @media (max-width: 768px) {
   .page-shell {
-    padding: 24px 0;
+    padding-block: 24px;
   }
 }
 
 /* Page/section rhythm alt for marketing pages */
 .section {
-  padding: 64px 0;
+  padding-block: 64px;
 }
 @media (max-width: 768px) {
   .section {
-    padding: 40px 0;
+    padding-block: 40px;
   }
 }
 
@@ -166,6 +166,44 @@ body {
 @media (max-width: 768px) {
   .sticky-bar {
     position: static;
+  }
+}
+
+/* Courses filter bar responsive grid & mobile swipeable pill rail */
+.courses-filter-grid {
+  display: grid;
+  grid-template-columns: 1fr 165px 195px auto;
+  gap: 10px;
+  align-items: center;
+}
+.courses-filter-search {
+  min-width: 0;
+}
+@media (max-width: 768px) {
+  .courses-filter-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .courses-filter-search,
+  .courses-filter-reset {
+    grid-column: 1 / -1;
+  }
+}
+
+.courses-pill-rail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+@media (max-width: 640px) {
+  .courses-pill-rail {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  .courses-pill-rail::-webkit-scrollbar {
+    display: none;
   }
 }
 

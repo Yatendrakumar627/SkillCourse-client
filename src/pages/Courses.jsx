@@ -203,13 +203,15 @@ export default function Courses() {
         <Text size="sm" c="dimmed">Courses</Text>
       </Breadcrumbs>
 
-      <Group justify="space-between" align="flex-end" wrap="wrap" gap="md" mb="xl">
+      <Group justify="space-between" align="flex-end" wrap="wrap" gap="sm" mb={{ base: 'md', sm: 'xl' }}>
         <Box style={{ maxWidth: 680, minWidth: 0 }}>
           <Badge variant="light" color="teal" radius="xl" mb="xs">
             Built for College Students &amp; Faculty Mentors
           </Badge>
-          <Title order={1}>Career-First Course Catalog</Title>
-          <Text c="dimmed" mt={4}>
+          <Title order={1} style={{ fontSize: 'clamp(1.65rem, 3vw, 2.25rem)', lineHeight: 1.15 }}>
+            Career-First Course Catalog
+          </Title>
+          <Text c="dimmed" size="sm" mt={6} style={{ lineHeight: 1.55 }}>
             Flagship campus &amp; placement tracks (₹999–₹2,999) shown first, followed by Data Science, Full Stack, and specialized programs.
           </Text>
         </Box>
@@ -218,9 +220,9 @@ export default function Courses() {
             variant="light"
             color="indigo"
             radius="xl"
-            size="lg"
+            size="md"
             px="md"
-            py="sm"
+            py="xs"
             className="tabular-nums"
             role="status"
             aria-live="polite"
@@ -234,13 +236,15 @@ export default function Courses() {
       <Paper
         withBorder
         radius="lg"
-        p="sm"
-        mb="xl"
+        p={{ base: 'sm', sm: 'md' }}
+        mb={{ base: 'lg', sm: 'xl' }}
         style={{ background: 'var(--mantine-color-body)', boxShadow: 'var(--mantine-shadow-sm)' }}
       >
-          <Group align="center" gap="sm" wrap="wrap" p="xs">
+        <Stack gap="sm">
+          <Box className="courses-filter-grid">
             <TextInput
-              placeholder="Search by course, language (Python, Java, Rust), or instructor..."
+              className="courses-filter-search"
+              placeholder="Search courses, Python, Java, AI..."
               aria-label="Search courses"
               value={search}
               onChange={(e) => updateParam('q', e.target.value, '')}
@@ -261,7 +265,6 @@ export default function Courses() {
                   </ActionIcon>
                 ) : null
               }
-              style={{ flexGrow: 1, minWidth: 240 }}
             />
             <Select
               aria-label="Filter by difficulty level"
@@ -269,7 +272,6 @@ export default function Courses() {
               value={selectedLevel}
               onChange={(value) => updateParam('level', value || 'all', 'all')}
               radius="md"
-              w={{ base: '48%', sm: 155 }}
             />
             <Select
               aria-label="Sort courses"
@@ -277,22 +279,22 @@ export default function Courses() {
               value={sortBy}
               onChange={(value) => updateParam('sort', value || 'featured', 'featured')}
               radius="md"
-              w={{ base: '48%', sm: 185 }}
             />
             {hasActiveFilter && (
               <Button
-                variant="subtle"
+                className="courses-filter-reset"
+                variant="light"
                 color="gray"
                 onClick={clearFilters}
-                leftSection={<IconX size={16} />}
+                leftSection={<IconX size={15} />}
               >
-                Reset
+                Reset Filters
               </Button>
             )}
-          </Group>
+          </Box>
 
           {categories.length > 0 && (
-            <Group gap="xs" px="xs" pb={4} wrap="wrap" role="group" aria-label="Category quick filters">
+            <Box className="courses-pill-rail" role="group" aria-label="Category quick filters">
               <Button
                 size="xs"
                 radius="xl"
@@ -300,6 +302,7 @@ export default function Courses() {
                 color="indigo"
                 aria-pressed={resolvedCategoryId === 'all'}
                 onClick={() => updateParam('category', 'all', 'all')}
+                style={{ flexShrink: 0 }}
               >
                 All Tracks ({courses.length})
               </Button>
@@ -320,13 +323,15 @@ export default function Courses() {
                     color={pillColor}
                     aria-pressed={isActive}
                     onClick={() => updateParam('category', cat._id, 'all')}
+                    style={{ flexShrink: 0 }}
                   >
                     {cat.name} ({count})
                   </Button>
                 );
               })}
-            </Group>
+            </Box>
           )}
+        </Stack>
       </Paper>
 
       {loading ? (

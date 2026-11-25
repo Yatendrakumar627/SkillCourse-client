@@ -78,10 +78,10 @@ export default function About() {
       />
 
       {/* Key Metrics Strip */}
-      <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="lg" mb={48}>
+      <SimpleGrid cols={{ base: 2, md: 4 }} spacing={{ base: 'sm', sm: 'lg' }} mb={{ base: 32, sm: 48 }}>
         {HIGHLIGHTS.map((item) => (
-          <Paper key={item.label} withBorder p="lg" radius="lg" ta="center">
-            <Text fw={800} size="xl" c="indigo" style={{ fontSize: '1.75rem' }}>
+          <Paper key={item.label} withBorder p={{ base: 'md', sm: 'lg' }} radius="lg" ta="center">
+            <Text fw={800} size="xl" c="indigo" className="tabular-nums" style={{ fontSize: 'clamp(1.35rem, 3vw, 1.75rem)' }}>
               {item.value}
             </Text>
             <Text fw={700} size="sm" mt={4}>
@@ -95,13 +95,13 @@ export default function About() {
       </SimpleGrid>
 
       {/* Core Pillars */}
-      <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg" mb={48}>
+      <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg" mb={{ base: 32, sm: 48 }}>
         {PILLARS.map((card) => {
           const Icon = card.icon;
           return (
-            <Paper key={card.title} withBorder p="xl" radius="lg" className="card-hover">
-              <Group gap="sm" mb="sm" wrap="nowrap">
-                <ThemeIcon size="lg" radius="md" color="indigo" variant="light">
+            <Paper key={card.title} withBorder p={{ base: 'md', sm: 'xl' }} radius="lg" className="card-hover">
+              <Group gap="sm" mb="sm" wrap="nowrap" align="flex-start">
+                <ThemeIcon size="lg" radius="md" color="indigo" variant="light" style={{ flexShrink: 0, marginTop: 2 }}>
                   <Icon size={20} />
                 </ThemeIcon>
                 <Title order={3} fw={700}>{card.title}</Title>
@@ -115,20 +115,21 @@ export default function About() {
       </SimpleGrid>
 
       {/* Audience Alignment: Students & College Professors */}
-      <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg" mb={48}>
-        <Paper withBorder p="xl" radius="lg" style={{ background: 'var(--lms-surface-subtle)' }}>
-          <Group gap="sm" mb="md" wrap="nowrap">
-            <ThemeIcon size={40} radius="md" color="indigo" variant="light">
+      <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg" mb={{ base: 32, sm: 48 }}>
+        <Paper withBorder p={{ base: 'md', sm: 'xl' }} radius="lg" style={{ background: 'var(--lms-surface-subtle)' }}>
+          <Group gap="sm" mb="md" wrap="nowrap" align="flex-start">
+            <ThemeIcon size={40} radius="md" color="indigo" variant="light" style={{ flexShrink: 0, marginTop: 2 }}>
               <IconBriefcase size={20} />
             </ThemeIcon>
-            <div>
+            <div style={{ minWidth: 0 }}>
               <Title order={3} size="h4">For College Students &amp; Job Seekers</Title>
-              <Text size="xs" c="dimmed">From first-year foundations to campus placements</Text>
+              <Text size="xs" c="dimmed" mt={2}>From first-year foundations to campus placements</Text>
             </div>
           </Group>
           <List
             spacing="sm"
             size="sm"
+            styles={{ itemWrapper: { alignItems: 'flex-start' }, itemIcon: { marginTop: 2 } }}
             icon={
               <ThemeIcon color="teal" size={20} radius="xl">
                 <IconCheck size={13} />
@@ -141,19 +142,20 @@ export default function About() {
           </List>
         </Paper>
 
-        <Paper withBorder p="xl" radius="lg" style={{ background: 'var(--lms-surface-subtle)' }}>
-          <Group gap="sm" mb="md" wrap="nowrap">
-            <ThemeIcon size={40} radius="md" color="teal" variant="light">
+        <Paper withBorder p={{ base: 'md', sm: 'xl' }} radius="lg" style={{ background: 'var(--lms-surface-subtle)' }}>
+          <Group gap="sm" mb="md" wrap="nowrap" align="flex-start">
+            <ThemeIcon size={40} radius="md" color="teal" variant="light" style={{ flexShrink: 0, marginTop: 2 }}>
               <IconSchool size={20} />
             </ThemeIcon>
-            <div>
+            <div style={{ minWidth: 0 }}>
               <Title order={3} size="h4">For College Professors &amp; Placement Cells</Title>
-              <Text size="xs" c="dimmed">Bridge the degree-to-industry employability gap</Text>
+              <Text size="xs" c="dimmed" mt={2}>Bridge the degree-to-industry employability gap</Text>
             </div>
           </Group>
           <List
             spacing="sm"
             size="sm"
+            styles={{ itemWrapper: { alignItems: 'flex-start' }, itemIcon: { marginTop: 2 } }}
             icon={
               <ThemeIcon color="indigo" size={20} radius="xl">
                 <IconCheck size={13} />
@@ -170,7 +172,7 @@ export default function About() {
       {/* CTA + Delhi Contact Strip */}
       <Paper
         withBorder
-        p="xl"
+        p={{ base: 'md', sm: 'xl' }}
         radius="lg"
         style={{
           background: 'var(--lms-surface-accent-soft)',
@@ -178,29 +180,30 @@ export default function About() {
         }}
       >
         <Group justify="space-between" align="center" wrap="wrap" gap="lg">
-          <Stack gap={4} style={{ maxWidth: 600 }}>
+          <Stack gap={6} style={{ maxWidth: 600 }}>
             <Title order={3}>Ready to Explore Our Tracks or Partner With Us?</Title>
             <Text size="sm" c="dimmed">
               Browse 56+ career, Data Science, and Full Stack courses or connect with our New Delhi team for campus cohorts and student queries.
             </Text>
-            <Group gap="lg" mt="xs" wrap="wrap">
+            <Group gap={{ base: 'xs', sm: 'lg' }} mt={4} wrap="wrap">
               <Group gap={6} wrap="nowrap">
-                <IconMapPin size={15} color="var(--mantine-color-indigo-6)" />
+                <IconMapPin size={15} color="var(--mantine-color-indigo-6)" style={{ flexShrink: 0 }} />
                 <Text size="xs" fw={600}>New Delhi, Delhi NCR, India</Text>
               </Group>
               <Group gap={6} wrap="nowrap">
-                <IconPhone size={15} color="var(--mantine-color-indigo-6)" />
+                <IconPhone size={15} color="var(--mantine-color-indigo-6)" style={{ flexShrink: 0 }} />
                 <Text size="xs" fw={600}>+91 98994 15841</Text>
               </Group>
             </Group>
           </Stack>
 
-          <Group gap="sm" wrap="wrap">
+          <Group gap="sm" wrap="wrap" w={{ base: '100%', sm: 'auto' }}>
             <Button
               component={Link}
               to="/courses"
               color="indigo"
               size="md"
+              w={{ base: '100%', sm: 'auto' }}
               rightSection={<IconArrowRight size={16} />}
             >
               Browse Courses
@@ -210,6 +213,7 @@ export default function About() {
               to="/contact"
               variant="default"
               size="md"
+              w={{ base: '100%', sm: 'auto' }}
             >
               Contact Delhi Team
             </Button>

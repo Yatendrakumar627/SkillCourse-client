@@ -85,7 +85,7 @@ export default function Contact() {
               {...register('message')}
               mb="lg"
             />
-            <Button type="submit" size="md" color="indigo" loading={submitting}>
+            <Button type="submit" size="md" color="indigo" loading={submitting} w={{ base: '100%', sm: 'auto' }}>
               Send Message
             </Button>
           </form>
@@ -120,6 +120,7 @@ export default function Contact() {
                 href={`tel:${PHONE_E164}`}
                 variant="light"
                 color="indigo"
+                w={{ base: '100%', sm: 'auto' }}
                 leftSection={<IconPhone size={16} />}
               >
                 Call {PHONE_DISPLAY}
@@ -131,6 +132,7 @@ export default function Contact() {
                 rel="noopener noreferrer"
                 variant="light"
                 color="teal"
+                w={{ base: '100%', sm: 'auto' }}
                 leftSection={<IconBrandWhatsapp size={16} />}
               >
                 WhatsApp Support

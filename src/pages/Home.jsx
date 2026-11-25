@@ -141,8 +141,8 @@ export default function Home() {
           size="lg"
           className="lms-container hero-inner"
           style={{
-            paddingTop: 'clamp(64px, 7vw, 104px)',
-            paddingBottom: 'clamp(72px, 7.5vw, 104px)',
+            paddingTop: 'clamp(40px, 6.5vw, 96px)',
+            paddingBottom: 'clamp(44px, 7vw, 96px)',
           }}
         >
           <SimpleGrid cols={{ base: 1, md: 2 }} spacing="xl" style={{ alignItems: 'center' }}>
@@ -171,28 +171,30 @@ export default function Home() {
                 order={1}
                 style={{
                   color: 'white',
-                  fontSize: 'clamp(2.05rem, 4.1vw, 3.45rem)',
-                  lineHeight: 1.08,
+                  fontSize: 'clamp(1.95rem, 4.1vw, 3.45rem)',
+                  lineHeight: 1.1,
                   letterSpacing: '-0.025em',
                   fontWeight: 700,
                 }}
               >
-                Master <FlipWords words={HERO_WORDS} /> Beyond the College Syllabus
+                Master <FlipWords words={HERO_WORDS} />
+                <br />
+                Beyond the College Syllabus
               </Title>
               <Text size="lg" mt="md" style={{ color: 'rgba(255,255,255,0.9)', maxWidth: 530, lineHeight: 1.55 }}>
                 Practical live courses in AI, Excel, Placements, Data Science, and Full Stack Engineering—trusted by
                 college faculty mentors and built for student employability.
               </Text>
 
-              <form className="hero-search" onSubmit={handleSearch} style={{ marginTop: 28 }}>
+              <form className="hero-search" onSubmit={handleSearch} style={{ marginTop: 24 }}>
                 <TextInput
                   variant="unstyled"
-                  placeholder="Search AI, Placement, Python, Java, Data Science..."
+                  placeholder="Search courses, AI, Python..."
                   aria-label="Search courses"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   leftSection={<IconSearch size={18} style={{ color: 'rgba(255,255,255,0.75)' }} />}
-                  style={{ flexGrow: 1 }}
+                  style={{ flexGrow: 1, minWidth: 0 }}
                 />
                 <Button
                   type="submit"
@@ -200,14 +202,14 @@ export default function Home() {
                   color="indigo"
                   radius="md"
                   size="md"
-                  px="xl"
-                  styles={{ root: { fontWeight: 700 } }}
+                  px="lg"
+                  styles={{ root: { fontWeight: 700, flexShrink: 0 } }}
                 >
                   Search
                 </Button>
               </form>
 
-              <Group mt="xl" gap="md" wrap="wrap">
+              <Group mt="lg" gap="sm" wrap="wrap" w={{ base: '100%', sm: 'auto' }}>
                 <Button
                   size="lg"
                   variant="white"
@@ -215,6 +217,7 @@ export default function Home() {
                   component={Link}
                   to="/courses"
                   className="btn-shine"
+                  w={{ base: '100%', sm: 'auto' }}
                   rightSection={<IconChevronRight size={18} />}
                   styles={{ root: { fontWeight: 700 } }}
                 >
@@ -225,6 +228,7 @@ export default function Home() {
                   variant="outline"
                   component={Link}
                   to="/about"
+                  w={{ base: '100%', sm: 'auto' }}
                   styles={{
                     root: { borderColor: 'rgba(255,255,255,0.45)', color: 'white', background: 'rgba(255,255,255,0.08)' },
                   }}
@@ -398,19 +402,32 @@ export default function Home() {
                 </Text>
               </div>
             </Group>
-            <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="lg">
+            <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing={{ base: 'sm', sm: 'lg' }}>
               {WHY_ITEMS.map((item) => {
                 const Icon = item.icon;
                 return (
                   <SpotlightWrap key={item.title} style={{ height: '100%' }}>
-                    <Card withBorder radius="lg" p="xl" style={{ height: '100%' }}>
-                      <ThemeIcon size={48} radius="md" color="indigo" variant="light" mb="md">
-                        <Icon size={24} />
-                      </ThemeIcon>
-                      <Text fw={700} size="md">{item.title}</Text>
-                      <Text size="sm" c="dimmed" mt={6} style={{ lineHeight: 1.55 }}>
-                        {item.text}
-                      </Text>
+                    <Card withBorder radius="lg" p={{ base: 'md', sm: 'xl' }} style={{ height: '100%' }}>
+                      <Group gap="sm" align="flex-start" wrap="nowrap" hiddenFrom="sm">
+                        <ThemeIcon size={40} radius="md" color="indigo" variant="light" style={{ flexShrink: 0, marginTop: 2 }}>
+                          <Icon size={20} />
+                        </ThemeIcon>
+                        <div style={{ minWidth: 0 }}>
+                          <Text fw={700} size="md">{item.title}</Text>
+                          <Text size="sm" c="dimmed" mt={4} style={{ lineHeight: 1.55 }}>
+                            {item.text}
+                          </Text>
+                        </div>
+                      </Group>
+                      <Box visibleFrom="sm">
+                        <ThemeIcon size={48} radius="md" color="indigo" variant="light" mb="md">
+                          <Icon size={24} />
+                        </ThemeIcon>
+                        <Text fw={700} size="md">{item.title}</Text>
+                        <Text size="sm" c="dimmed" mt={6} style={{ lineHeight: 1.55 }}>
+                          {item.text}
+                        </Text>
+                      </Box>
                     </Card>
                   </SpotlightWrap>
                 );
@@ -517,17 +534,18 @@ export default function Home() {
                       Explore 56+ courses starting at ₹999 or talk directly with our New Delhi team.
                     </Text>
                   </Stack>
-                  <Group gap="sm">
+                  <Group gap="sm" w={{ base: '100%', sm: 'auto' }}>
                     <Button
                       component={Link}
                       to="/courses"
                       color="indigo"
                       className="btn-shine"
+                      w={{ base: '100%', sm: 'auto' }}
                       rightSection={<IconChevronRight size={16} />}
                     >
                       Explore Courses
                     </Button>
-                    <Button component={Link} to="/contact" variant="default">
+                    <Button component={Link} to="/contact" variant="default" w={{ base: '100%', sm: 'auto' }}>
                       Contact Us
                     </Button>
                   </Group>
