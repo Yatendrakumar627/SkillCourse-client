@@ -10,6 +10,7 @@ export default function PaymentApprovalTable({ payments, onApprove, onReject }) 
           <Table.Th>Student</Table.Th>
           <Table.Th>Course</Table.Th>
           <Table.Th>Amount</Table.Th>
+          <Table.Th>Transaction ID (UTR)</Table.Th>
           <Table.Th>Screenshot</Table.Th>
           <Table.Th>Actions</Table.Th>
         </Table.Tr>
@@ -18,11 +19,16 @@ export default function PaymentApprovalTable({ payments, onApprove, onReject }) 
         {payments.map((p) => (
           <Table.Tr key={p._id}>
             <Table.Td>
-              <Text fw={500}>{p.user?.name}</Text>
-              <Text size="xs" c="dimmed">{p.user?.email}</Text>
+              <Text fw={500}>{p.user?.name || 'Unknown'}</Text>
+              <Text size="xs" c="dimmed">{p.user?.email || ''}</Text>
             </Table.Td>
-            <Table.Td>{p.course?.title}</Table.Td>
-            <Table.Td>₹{p.amount}</Table.Td>
+            <Table.Td>{p.course?.title || 'Course Deleted'}</Table.Td>
+            <Table.Td className="tabular-nums">₹{p.amount}</Table.Td>
+            <Table.Td>
+              <Text size="xs" fw={700} className="tabular-nums" style={{ fontFamily: 'monospace' }}>
+                {p.transactionId || 'N/A'}
+              </Text>
+            </Table.Td>
             <Table.Td>
               <a href={getUploadUrl(p.screenshotUrl)} target="_blank" rel="noreferrer">
                 <Image
@@ -35,7 +41,7 @@ export default function PaymentApprovalTable({ payments, onApprove, onReject }) 
               </a>
             </Table.Td>
             <Table.Td>
-              <Group gap="xs">
+              <Group gap="xs" wrap="nowrap">
                 <Button size="xs" color="green" leftSection={<IconCheck size={12} />} onClick={() => onApprove(p._id)}>
                   Approve
                 </Button>

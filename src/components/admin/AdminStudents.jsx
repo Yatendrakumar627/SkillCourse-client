@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Table, Button, Group } from '@mantine/core';
+import { useMemo, useState } from 'react';
+import { Table, Button, Group, TextInput, Select, SimpleGrid } from '@mantine/core';
+import { IconSearch } from '@tabler/icons-react';
 import { updateStudentStatusAPI } from '../../services/api';
 import TablePanel from '../ui/TablePanel';
 import StatusBadge from '../ui/StatusBadge';
@@ -7,9 +8,24 @@ import EmptyState from '../ui/EmptyState';
 import StudentActivityModal from './StudentActivityModal';
 import { notifyError, notifySuccess } from '../../utils/toast';
 
-export default function AdminStudents({ students, onReload }) {
+export default function AdminStudents({ students, courses = [], onReload }) {
   const [activityStudentId, setActivityStudentId] = useState(null);
   const [activityOpen, setActivityOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+
+  const filteredStudents = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return students.filter((st) => {
+      if (statusFilter !== 'all' && st.status !== statusFilter) return false;
+      if (!q) return true;
+      return (
+        (st.name || '').toLowerCase().includes(q) ||
+        (st.email || '').toLowerCase().includes(q) ||
+        (st.phone || '').toLowerCase().includes(q)
+      );
+    });
+  }, [students, search, statusFilter]);
 
   const handleToggleStatus = async (id, currentStatus) => {
     const nextStatus = currentStatus === 'active' ? 'inactive' : 'active';
@@ -31,10 +47,28 @@ export default function AdminStudents({ students, onReload }) {
     <>
       <TablePanel
         title="User Base Directory"
-        subtitle="Registered learners and their account status"
-        count={students.length}
+        subtitle="Registered learners, account status, and enrollment portfolio"
+        count={filteredStudents.length}
       >
-        {students.length > 0 ? (
+        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm" mb="md">
+          <TextInput
+            placeholder="Search by name, email, or phone..."
+            leftSection={<IconSearch size={15} />}
+            value={search}
+            onChange={(e) => setSearch(e.currentTarget.value)}
+          />
+          <Select
+            value={statusFilter}
+            onChange={(val) => setStatusFilter(val || 'all')}
+            data={[
+              { value: 'all', label: `All Students (${students.length})` },
+              { value: 'active', label: 'Active Only' },
+              { value: 'inactive', label: 'Inactive Only' },
+            ]}
+          />
+        </SimpleGrid>
+
+        {filteredStudents.length > 0 ? (
           <Table striped highlightOnHover>
             <Table.Thead>
               <Table.Tr>
@@ -46,7 +80,7 @@ export default function AdminStudents({ students, onReload }) {
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
-              {students.map((st) => (
+              {filteredStudents.map((st) => (
                 <Table.Tr key={st._id}>
                   <Table.Td fw={500}>{st.name}</Table.Td>
                   <Table.Td>{st.email}</Table.Td>
@@ -55,7 +89,7 @@ export default function AdminStudents({ students, onReload }) {
                     <StatusBadge status={st.status} />
                   </Table.Td>
                   <Table.Td>
-                    <Group gap="xs">
+                    <Group gap="xs" wrap="nowrap">
                       <Button size="xs" variant="default" onClick={() => handleToggleStatus(st._id, st.status)}>
                         Toggle Status
                       </Button>
@@ -69,7 +103,10 @@ export default function AdminStudents({ students, onReload }) {
             </Table.Tbody>
           </Table>
         ) : (
-          <EmptyState title="No students registered yet." description="New registrations will appear here." />
+          <EmptyState
+            title={students.length === 0 ? 'No students registered yet.' : 'No matching students found.'}
+            description={students.length === 0 ? 'New registrations will appear here.' : 'Try clearing your search or status filter.'}
+          />
         )}
       </TablePanel>
 
@@ -77,6 +114,8 @@ export default function AdminStudents({ students, onReload }) {
         opened={activityOpen}
         onClose={() => setActivityOpen(false)}
         studentId={activityStudentId}
+        courses={courses}
+        onChanged={onReload}
       />
     </>
   );

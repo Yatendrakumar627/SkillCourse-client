@@ -6,19 +6,24 @@ import {
 import { useForm } from 'react-hook-form';
 import { IconPlus, IconUsers, IconDownload, IconStar } from '@tabler/icons-react';
 import {
-  getAssignmentsAPI, createAssignmentAPI,
+  getAssignmentsAPI, createAssignmentAPI, updateAssignmentAPI, deleteAssignmentAPI,
   getSubmissionsForAdminAPI, gradeSubmissionAPI, getUploadUrl,
 } from '../../services/api';
 import TablePanel from '../ui/TablePanel';
 import EmptyState from '../ui/EmptyState';
+import ConfirmModal from '../ui/ConfirmModal';
 import { notifyError, notifySuccess } from '../../utils/toast';
 
 export default function AdminAssignments({ courses }) {
   const [selectedCourseId, setSelectedCourseId] = useState('');
   const [assignList, setAssignList] = useState([]);
+  const [submissionCounts, setSubmissionCounts] = useState({});
   const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [editingAssignment, setEditingAssignment] = useState(null);
   const [assignFile, setAssignFile] = useState(null);
   const [assignSubmitting, setAssignSubmitting] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const [submissionsModalOpen, setSubmissionsModalOpen] = useState(false);
   const [activeAssignment, setActiveAssignment] = useState(null);
@@ -39,15 +44,33 @@ export default function AdminAssignments({ courses }) {
     }
   }, [courses, selectedCourseId]);
 
+  const reloadAssignments = async (courseId) => {
+    const res = await getAssignmentsAPI(courseId);
+    setAssignList(res.assignments || []);
+    setSubmissionCounts(res.submissionCounts || {});
+  };
+
   useEffect(() => {
     if (!selectedCourseId) return;
     getAssignmentsAPI(selectedCourseId)
-      .then((res) => setAssignList(res.assignments || []))
+      .then((res) => {
+        setAssignList(res.assignments || []);
+        setSubmissionCounts(res.submissionCounts || {});
+      })
       .catch((err) => console.error(err));
   }, [selectedCourseId]);
 
-  const handleOpenCreateModal = () => {
-    reset({ title: '', description: '', dueDate: '' });
+  const handleOpenCreateModal = (assignment = null) => {
+    setEditingAssignment(assignment);
+    if (assignment) {
+      reset({
+        title: assignment.title || '',
+        description: assignment.description || '',
+        dueDate: assignment.dueDate ? new Date(assignment.dueDate).toISOString().slice(0, 10) : '',
+      });
+    } else {
+      reset({ title: '', description: '', dueDate: '' });
+    }
     setAssignFile(null);
     setAssignModalOpen(true);
   };
@@ -59,23 +82,41 @@ export default function AdminAssignments({ courses }) {
       formData.append('course', selectedCourseId);
       formData.append('title', data.title);
       formData.append('description', data.description);
-      if (data.dueDate) {
-        formData.append('dueDate', data.dueDate);
-      }
+      formData.append('dueDate', data.dueDate || '');
       if (assignFile) {
         formData.append('file', assignFile);
       }
 
-      await createAssignmentAPI(selectedCourseId, formData);
+      if (editingAssignment) {
+        await updateAssignmentAPI(selectedCourseId, editingAssignment._id, formData);
+      } else {
+        await createAssignmentAPI(selectedCourseId, formData);
+      }
       setAssignModalOpen(false);
       setAssignFile(null);
-      const res = await getAssignmentsAPI(selectedCourseId);
-      setAssignList(res.assignments || []);
-      notifySuccess('Assignment Created', 'The assignment has been published.');
+      await reloadAssignments(selectedCourseId);
+      notifySuccess(
+        editingAssignment ? 'Assignment Updated' : 'Assignment Created',
+        editingAssignment ? 'Assignment changes have been saved.' : 'The assignment has been published.'
+      );
     } catch (error) {
-      notifyError('Create Failed', 'Error creating assignment.', error);
+      notifyError('Save Failed', 'Error saving assignment.', error);
     } finally {
       setAssignSubmitting(false);
+    }
+  };
+
+  const handleDeleteAssignment = async () => {
+    setDeleting(true);
+    try {
+      await deleteAssignmentAPI(selectedCourseId, deleteTarget._id);
+      setDeleteTarget(null);
+      await reloadAssignments(selectedCourseId);
+      notifySuccess('Assignment Deleted', 'The assignment and its submissions were removed.');
+    } catch (error) {
+      notifyError('Delete Failed', 'Error deleting assignment.', error);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -127,10 +168,12 @@ export default function AdminAssignments({ courses }) {
       <Group justify="space-between" align="center" mb="lg">
         <Select
           label="Select Course to View Assignments"
+          searchable
+          nothingFoundMessage="No matching course"
           data={courses.map((c) => ({ value: c._id, label: c.title }))}
           value={selectedCourseId}
           onChange={(val) => setSelectedCourseId(val || '')}
-          style={{ width: 350 }}
+          w={{ base: '100%', sm: 380 }}
         />
       </Group>
 
@@ -143,7 +186,7 @@ export default function AdminAssignments({ courses }) {
             <Button
               color="indigo"
               leftSection={<IconPlus size={16} />}
-              onClick={handleOpenCreateModal}
+              onClick={() => handleOpenCreateModal()}
             >
               Add Assignment
             </Button>
@@ -156,28 +199,59 @@ export default function AdminAssignments({ courses }) {
                   <Table.Th>Assignment Title</Table.Th>
                   <Table.Th>Description</Table.Th>
                   <Table.Th>Due Date</Table.Th>
-                  <Table.Th>Submissions</Table.Th>
+                  <Table.Th>Handout</Table.Th>
+                  <Table.Th>Actions</Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
-                {assignList.map((ass) => (
-                  <Table.Tr key={ass._id}>
-                    <Table.Td fw={500}>{ass.title}</Table.Td>
-                    <Table.Td>{ass.description}</Table.Td>
-                    <Table.Td>{ass.dueDate ? new Date(ass.dueDate).toLocaleDateString() : 'No Due Date'}</Table.Td>
-                    <Table.Td>
-                      <Button
-                        size="xs"
-                        variant="light"
-                        color="violet"
-                        leftSection={<IconUsers size={14} />}
-                        onClick={() => handleOpenSubmissionsModal(ass)}
-                      >
-                        Grade Solutions
-                      </Button>
-                    </Table.Td>
-                  </Table.Tr>
-                ))}
+                {assignList.map((ass) => {
+                  const subCount = submissionCounts[ass._id] || 0;
+                  return (
+                    <Table.Tr key={ass._id}>
+                      <Table.Td fw={500}>{ass.title}</Table.Td>
+                      <Table.Td maw={300}><Text size="sm" lineClamp={2}>{ass.description}</Text></Table.Td>
+                      <Table.Td className="tabular-nums">
+                        {ass.dueDate ? new Date(ass.dueDate).toLocaleDateString() : 'No Due Date'}
+                      </Table.Td>
+                      <Table.Td>
+                        {ass.filePath ? (
+                          <Button
+                            size="xs"
+                            variant="subtle"
+                            leftSection={<IconDownload size={14} />}
+                            component="a"
+                            href={getUploadUrl(ass.filePath)}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Handout
+                          </Button>
+                        ) : (
+                          <Text size="xs" c="dimmed">—</Text>
+                        )}
+                      </Table.Td>
+                      <Table.Td>
+                        <Group gap="xs" wrap="nowrap">
+                          <Button
+                            size="xs"
+                            variant="light"
+                            color="violet"
+                            leftSection={<IconUsers size={14} />}
+                            onClick={() => handleOpenSubmissionsModal(ass)}
+                          >
+                            Grade Solutions ({subCount})
+                          </Button>
+                          <Button size="xs" variant="default" onClick={() => handleOpenCreateModal(ass)}>
+                            Edit
+                          </Button>
+                          <Button size="xs" color="red" onClick={() => setDeleteTarget(ass)}>
+                            Delete
+                          </Button>
+                        </Group>
+                      </Table.Td>
+                    </Table.Tr>
+                  );
+                })}
               </Table.Tbody>
             </Table>
           ) : (
@@ -186,14 +260,18 @@ export default function AdminAssignments({ courses }) {
         </TablePanel>
       )}
 
-      {/* Create Assignment Modal */}
-      <Modal opened={assignModalOpen} onClose={() => setAssignModalOpen(false)} title="Create New Assignment">
+      {/* Create / Edit Assignment Modal */}
+      <Modal
+        opened={assignModalOpen}
+        onClose={() => setAssignModalOpen(false)}
+        title={editingAssignment ? 'Edit Assignment' : 'Create New Assignment'}
+      >
         <form onSubmit={handleSubmit(onSubmitAssignment)}>
           <TextInput label="Assignment Title" placeholder="e.g. Build a Todo Application" required {...register('title')} mb="sm" />
           <Textarea label="Instructions / Description" placeholder="Explain what the student should build..." required {...register('description')} mb="sm" />
           <TextInput label="Due Date" type="date" {...register('dueDate')} mb="sm" />
           <FileInput
-            label="Attach Material PDF / Handout"
+            label={editingAssignment?.filePath ? 'Replace Material PDF / Handout (Optional)' : 'Attach Material PDF / Handout'}
             placeholder="Select file"
             accept="image/*,.pdf,.doc,.docx,.txt,.zip"
             leftSection={<IconPlus size={16} />}
@@ -204,7 +282,7 @@ export default function AdminAssignments({ courses }) {
           <Group justify="flex-end">
             <Button variant="default" onClick={() => setAssignModalOpen(false)}>Cancel</Button>
             <Button type="submit" color="indigo" loading={assignSubmitting}>
-              Publish Assignment
+              {editingAssignment ? 'Save Changes' : 'Publish Assignment'}
             </Button>
           </Group>
         </form>
@@ -312,10 +390,20 @@ export default function AdminAssignments({ courses }) {
             onClick={handleGradeSubmit}
             loading={gradingSubmitting}
           >
-            Submit Grade & Feedback
+            Submit Grade &amp; Feedback
           </Button>
         </Group>
       </Modal>
+
+      <ConfirmModal
+        opened={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDeleteAssignment}
+        title="Delete assignment?"
+        message={`Delete "${deleteTarget?.title}" and all its student submissions? This cannot be undone.`}
+        confirmLabel="Delete"
+        loading={deleting}
+      />
     </>
   );
 }

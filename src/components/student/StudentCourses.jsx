@@ -6,9 +6,11 @@ import {
 import { Link } from 'react-router-dom';
 import {
   IconArrowLeft, IconArrowRight, IconDownload, IconClipboardCheck, IconUpload,
-  IconBook2, IconCalendar, IconClipboardList,
+  IconBook2, IconCalendar, IconClipboardList, IconBrandTelegram,
 } from '@tabler/icons-react';
-import { getModulesAPI, getAssignmentsAPI, submitAssignmentAPI, getUploadUrl } from '../../services/api';
+import {
+  getModulesAPI, getAssignmentsAPI, submitAssignmentAPI, getUploadUrl, requestTelegramFileAPI,
+} from '../../services/api';
 import EmptyState from '../ui/EmptyState';
 import LoadingState from '../ui/LoadingState';
 import SectionHeader from '../ui/SectionHeader';
@@ -119,6 +121,20 @@ export default function StudentCourses({
   const [submissionText, setSubmissionText] = useState('');
   const [submissionFile, setSubmissionFile] = useState(null);
   const [submittingSolution, setSubmittingSolution] = useState(false);
+  const [deliveringModId, setDeliveringModId] = useState(null);
+
+  const handleGetTelegramFile = async (mod) => {
+    setDeliveringModId(mod._id);
+    try {
+      const res = await requestTelegramFileAPI(mod._id);
+      window.open(res.telegramLink, '_blank', 'noopener,noreferrer');
+      notifySuccess('Opening Telegram Bot', 'Tap Start in Telegram to receive your file.');
+    } catch (error) {
+      notifyError('Download Failed', 'Could not generate Telegram file link.', error);
+    } finally {
+      setDeliveringModId(null);
+    }
+  };
 
   const handleSelectCourse = async (course) => {
     setSelectedCourse(course);
@@ -294,6 +310,19 @@ export default function StudentCourses({
                         <Text fw={700} size="sm">{mod.title}</Text>
                         {mod.description && (
                           <Text size="xs" c="dimmed" mt={4}>{mod.description}</Text>
+                        )}
+                        {mod.telegramMessageId && (
+                          <Button
+                            size="xs"
+                            variant="light"
+                            color="teal"
+                            mt="xs"
+                            loading={deliveringModId === mod._id}
+                            leftSection={<IconBrandTelegram size={15} />}
+                            onClick={() => handleGetTelegramFile(mod)}
+                          >
+                            Get File on Telegram (up to 2GB)
+                          </Button>
                         )}
                       </div>
                     </Group>

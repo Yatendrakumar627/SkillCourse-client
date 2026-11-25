@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Container, Tabs, Badge, Modal, Textarea, Button, Group, Text, Title } from '@mantine/core';
+import { Container, Tabs, Badge, Modal, Textarea, Button, Group, Text, Title, Box } from '@mantine/core';
 import {
   IconTrendingUp, IconBook, IconFolder, IconClipboard,
   IconReceipt, IconCalendar, IconBell, IconUsers, IconShield,
+  IconMail, IconBrandTelegram,
 } from '@tabler/icons-react';
 import useAdminData from '../hooks/useAdminData';
-import { updatePaymentStatusAPI } from '../services/api';
+import { updatePaymentStatusAPI, testTelegramAPI } from '../services/api';
 import { notifyError, notifySuccess } from '../utils/toast';
 import LoadingState from '../components/ui/LoadingState';
 import ErrorState from '../components/ui/ErrorState';
@@ -17,11 +18,12 @@ import AdminPayments from '../components/admin/AdminPayments';
 import AdminLiveClasses from '../components/admin/AdminLiveClasses';
 import AdminAnnouncements from '../components/admin/AdminAnnouncements';
 import AdminStudents from '../components/admin/AdminStudents';
+import AdminInquiries from '../components/admin/AdminInquiries';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const {
-    courses, categories, payments, classes, announcements, students,
+    courses, categories, payments, classes, announcements, students, inquiries,
     loading, error, reload,
   } = useAdminData();
 
@@ -30,14 +32,27 @@ export default function AdminDashboard() {
   const [rejectTarget, setRejectTarget] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [rejecting, setRejecting] = useState(false);
+  const [testingTelegram, setTestingTelegram] = useState(false);
+
+  const handleTestTelegram = async () => {
+    setTestingTelegram(true);
+    try {
+      const res = await testTelegramAPI();
+      notifySuccess('Telegram Connected', res.message || 'Test message sent to channel.');
+    } catch (err) {
+      notifyError('Telegram Test Failed', 'Could not post test message to channel.', err);
+    } finally {
+      setTestingTelegram(false);
+    }
+  };
 
   const handleApprovePayment = async (id) => {
     try {
       await updatePaymentStatusAPI(id, { status: 'approved' });
       notifySuccess('Payment Approved', 'Student enrollment has been activated.');
       reload();
-    } catch (error) {
-      notifyError('Approval Failed', 'There was an error approving this payment.', error);
+    } catch (err) {
+      notifyError('Approval Failed', 'There was an error approving this payment.', err);
     }
   };
 
@@ -60,8 +75,8 @@ export default function AdminDashboard() {
       setRejectTarget(null);
       reload();
       notifySuccess('Payment Rejected', 'The student has been notified about the rejection.');
-    } catch (error) {
-      notifyError('Rejection Failed', 'There was an error rejecting this payment.', error);
+    } catch (err) {
+      notifyError('Rejection Failed', 'There was an error rejecting this payment.', err);
     } finally {
       setRejecting(false);
     }
@@ -88,9 +103,21 @@ export default function AdminDashboard() {
             Manage courses, payments, cohorts and learners across your LMS.
           </Text>
         </div>
-        <Badge color="violet" variant="light" size="lg" radius="sm" leftSection={<IconShield size={14} />}>
-          Admin Access
-        </Badge>
+        <Group gap="xs" wrap="wrap">
+          <Button
+            size="xs"
+            variant="light"
+            color="teal"
+            leftSection={<IconBrandTelegram size={14} />}
+            loading={testingTelegram}
+            onClick={handleTestTelegram}
+          >
+            Test Telegram
+          </Button>
+          <Badge color="violet" variant="light" size="lg" radius="sm" leftSection={<IconShield size={14} />}>
+            Admin Access
+          </Badge>
+        </Group>
       </Group>
 
       <Tabs value={activeTab} onChange={setActiveTab} color="violet">
@@ -105,6 +132,9 @@ export default function AdminDashboard() {
           <Tabs.Tab value="classes" leftSection={<IconCalendar size={16} />}>Live Classes</Tabs.Tab>
           <Tabs.Tab value="announcements" leftSection={<IconBell size={16} />}>Announcements</Tabs.Tab>
           <Tabs.Tab value="students" leftSection={<IconUsers size={16} />}>Students</Tabs.Tab>
+          <Tabs.Tab value="inquiries" leftSection={<IconMail size={16} />}>
+            Inquiries {inquiries.length > 0 && <Badge color="indigo" variant="light" size="xs">{inquiries.length}</Badge>}
+          </Tabs.Tab>
         </Tabs.List>
 
         <Tabs.Panel value="overview">
@@ -131,7 +161,11 @@ export default function AdminDashboard() {
         </Tabs.Panel>
 
         <Tabs.Panel value="payments">
-          <AdminPayments payments={payments} />
+          <AdminPayments
+            payments={payments}
+            onApprove={handleApprovePayment}
+            onReject={handleOpenRejectModal}
+          />
         </Tabs.Panel>
 
         <Tabs.Panel value="classes">
@@ -143,7 +177,11 @@ export default function AdminDashboard() {
         </Tabs.Panel>
 
         <Tabs.Panel value="students">
-          <AdminStudents students={students} onReload={reload} />
+          <AdminStudents students={students} courses={courses} onReload={reload} />
+        </Tabs.Panel>
+
+        <Tabs.Panel value="inquiries">
+          <AdminInquiries inquiries={inquiries} onReload={reload} />
         </Tabs.Panel>
       </Tabs>
 
@@ -152,10 +190,24 @@ export default function AdminDashboard() {
         opened={Boolean(rejectTarget)}
         onClose={() => setRejectTarget(null)}
         title="Reject Transaction Request"
+        centered
       >
+        {rejectTarget && (
+          <Box
+            p="sm"
+            mb="md"
+            style={{ borderRadius: 8, background: 'var(--lms-surface-subtle)', border: '1px solid var(--mantine-color-default-border)' }}
+          >
+            <Text size="sm" fw={600}>{rejectTarget.user?.name || 'Student'} · ₹{rejectTarget.amount}</Text>
+            <Text size="xs" c="dimmed">Course: {rejectTarget.course?.title || 'Course'}</Text>
+            <Text size="xs" c="dimmed" style={{ fontFamily: 'monospace' }}>
+              UTR: {rejectTarget.transactionId || 'N/A'}
+            </Text>
+          </Box>
+        )}
         <Textarea
           label="Reason for rejection"
-          placeholder="e.g. Screenshot blurry, payment amount mismatch"
+          placeholder="e.g. Screenshot blurry, UTR mismatch, payment amount mismatch"
           required
           value={rejectionReason}
           onChange={(e) => setRejectionReason(e.target.value)}

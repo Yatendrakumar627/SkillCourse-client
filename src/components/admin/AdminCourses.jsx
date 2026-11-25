@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Table, Button, Group, Image, Modal, TextInput, Textarea,
-  Select, Checkbox, Stack, Text, Divider,
+  Select, Checkbox, Stack, Text, Divider, Badge, SimpleGrid,
 } from '@mantine/core';
 import { useForm } from 'react-hook-form';
-import { IconPlus, IconCategory, IconTrash } from '@tabler/icons-react';
+import { IconPlus, IconCategory, IconTrash, IconSearch, IconStar } from '@tabler/icons-react';
 import {
   createCourseAPI, updateCourseAPI, deleteCourseAPI,
   createCategoryAPI, deleteCategoryAPI,
@@ -26,17 +26,40 @@ export default function AdminCourses({ courses, categories, onReload }) {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [savingCategory, setSavingCategory] = useState(false);
 
+  const [search, setSearch] = useState('');
+  const [filterCategory, setFilterCategory] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
+
   const { register, handleSubmit, reset, setValue, watch } = useForm({
     defaultValues: {
       level: 'Beginner',
       category: '',
       isPublished: false,
+      isFeatured: false,
+      displayOrder: 100,
     },
   });
 
   const levelValue = watch('level');
   const categoryValue = watch('category');
   const isPublishedValue = watch('isPublished');
+  const isFeaturedValue = watch('isFeatured');
+
+  const filteredCourses = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return courses.filter((c) => {
+      if (filterCategory !== 'all' && String(c.category?._id || c.category || '') !== filterCategory) {
+        return false;
+      }
+      if (filterStatus === 'published' && !c.isPublished) return false;
+      if (filterStatus === 'draft' && c.isPublished) return false;
+      if (!q) return true;
+      return (
+        (c.title || '').toLowerCase().includes(q) ||
+        (c.instructor || '').toLowerCase().includes(q)
+      );
+    });
+  }, [courses, search, filterCategory, filterStatus]);
 
   const handleOpenModal = (course = null) => {
     setSelectedCourse(course);
@@ -54,12 +77,15 @@ export default function AdminCourses({ courses, categories, onReload }) {
         category: course.category?._id || course.category || '',
         instructor: course.instructor || '',
         isPublished: Boolean(course.isPublished),
+        isFeatured: Boolean(course.isFeatured),
+        displayOrder: course.displayOrder ?? 100,
       });
     } else {
       reset({
         title: '', description: '', shortDescription: '', price: 0,
         discountedPrice: '', thumbnail: '', duration: '', language: 'English',
-        level: 'Beginner', category: '', instructor: '', isPublished: false,
+        level: 'Beginner', category: '', instructor: '',
+        isPublished: false, isFeatured: false, displayOrder: 100,
       });
     }
     setModalOpen(true);
@@ -78,6 +104,12 @@ export default function AdminCourses({ courses, categories, onReload }) {
         data.discountedPrice === '' || data.discountedPrice === null
           ? null
           : Number(data.discountedPrice),
+      displayOrder:
+        data.displayOrder === '' || data.displayOrder === null
+          ? 100
+          : Number(data.displayOrder),
+      isFeatured: Boolean(data.isFeatured),
+      isPublished: Boolean(data.isPublished),
     };
 
     setSaving(true);
@@ -142,9 +174,9 @@ export default function AdminCourses({ courses, categories, onReload }) {
       <TablePanel
         title="All Live Programs"
         subtitle="Courses currently in the catalog"
-        count={courses.length}
+        count={filteredCourses.length}
         actions={
-          <Group gap="xs">
+          <Group gap="xs" wrap="wrap">
             <Button
               variant="default"
               leftSection={<IconCategory size={16} />}
@@ -162,7 +194,33 @@ export default function AdminCourses({ courses, categories, onReload }) {
           </Group>
         }
       >
-        {courses.length > 0 ? (
+        <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="sm" mb="md">
+          <TextInput
+            placeholder="Search by course title or instructor..."
+            leftSection={<IconSearch size={15} />}
+            value={search}
+            onChange={(e) => setSearch(e.currentTarget.value)}
+          />
+          <Select
+            value={filterCategory}
+            onChange={(val) => setFilterCategory(val || 'all')}
+            data={[
+              { value: 'all', label: 'All Categories' },
+              ...categories.map((cat) => ({ value: cat._id, label: cat.name })),
+            ]}
+          />
+          <Select
+            value={filterStatus}
+            onChange={(val) => setFilterStatus(val || 'all')}
+            data={[
+              { value: 'all', label: 'All Statuses' },
+              { value: 'published', label: 'Published Only' },
+              { value: 'draft', label: 'Drafts Only' },
+            ]}
+          />
+        </SimpleGrid>
+
+        {filteredCourses.length > 0 ? (
           <Table striped highlightOnHover>
             <Table.Thead>
               <Table.Tr>
@@ -175,29 +233,56 @@ export default function AdminCourses({ courses, categories, onReload }) {
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
-              {courses.map((c) => (
-                <Table.Tr key={c._id}>
-                  <Table.Td>
-                    <Image src={c.thumbnail || 'https://placehold.co/100x60'} height={40} width={70} radius="sm" />
-                  </Table.Td>
-                  <Table.Td fw={500}>{c.title}</Table.Td>
-                  <Table.Td>{c.instructor}</Table.Td>
-                  <Table.Td>₹{c.discountedPrice || c.price}</Table.Td>
-                  <Table.Td>
-                    <StatusBadge status={c.isPublished ? 'published' : 'draft'} />
-                  </Table.Td>
-                  <Table.Td>
-                    <Group gap="xs">
-                      <Button size="xs" variant="default" onClick={() => handleOpenModal(c)}>Edit</Button>
-                      <Button size="xs" color="red" onClick={() => setDeleteTarget(c)}>Delete</Button>
-                    </Group>
-                  </Table.Td>
-                </Table.Tr>
-              ))}
+              {filteredCourses.map((c) => {
+                const effectivePrice = c.discountedPrice ?? c.price;
+                const hasDiscount = c.discountedPrice != null && c.discountedPrice < c.price;
+                return (
+                  <Table.Tr key={c._id}>
+                    <Table.Td>
+                      <Image src={c.thumbnail || 'https://placehold.co/100x60'} height={40} width={70} radius="sm" />
+                    </Table.Td>
+                    <Table.Td>
+                      <Text fw={500}>{c.title}</Text>
+                      <Group gap={6} mt={2} wrap="wrap">
+                        {c.category?.name && (
+                          <Badge size="xs" variant="light" color="indigo">{c.category.name}</Badge>
+                        )}
+                        {c.isFeatured && (
+                          <Badge size="xs" variant="light" color="yellow" leftSection={<IconStar size={10} />}>
+                            Featured
+                          </Badge>
+                        )}
+                        <Text size="xs" c="dimmed" className="tabular-nums">#{c.displayOrder ?? 100}</Text>
+                      </Group>
+                    </Table.Td>
+                    <Table.Td>{c.instructor || '—'}</Table.Td>
+                    <Table.Td className="tabular-nums">
+                      ₹{effectivePrice}
+                      {hasDiscount && (
+                        <Text span size="xs" c="dimmed" td="line-through" ml={6}>
+                          ₹{c.price}
+                        </Text>
+                      )}
+                    </Table.Td>
+                    <Table.Td>
+                      <StatusBadge status={c.isPublished ? 'published' : 'draft'} />
+                    </Table.Td>
+                    <Table.Td>
+                      <Group gap="xs" wrap="nowrap">
+                        <Button size="xs" variant="default" onClick={() => handleOpenModal(c)}>Edit</Button>
+                        <Button size="xs" color="red" onClick={() => setDeleteTarget(c)}>Delete</Button>
+                      </Group>
+                    </Table.Td>
+                  </Table.Tr>
+                );
+              })}
             </Table.Tbody>
           </Table>
         ) : (
-          <EmptyState title="No courses yet" description="Create your first live program to get started." />
+          <EmptyState
+            title={courses.length === 0 ? 'No courses yet' : 'No matching courses found'}
+            description={courses.length === 0 ? 'Create your first live program to get started.' : 'Try adjusting your search or filter selections.'}
+          />
         )}
       </TablePanel>
 
@@ -207,15 +292,15 @@ export default function AdminCourses({ courses, categories, onReload }) {
           <TextInput label="Course Title" required {...register('title')} mb="sm" />
           <TextInput label="Short Description (max 150 chars)" maxLength={150} {...register('shortDescription')} mb="sm" />
           <Textarea label="Syllabus/Full Description" required {...register('description')} minRows={4} mb="sm" />
-          <Group grow mb="sm">
-            <TextInput label="Base Price (₹)" required type="number" {...register('price')} />
-            <TextInput label="Discounted Price (₹)" type="number" {...register('discountedPrice')} />
-          </Group>
-          <Group grow mb="sm">
+          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm" mb="sm">
+            <TextInput label="Base Price (₹)" required type="number" min={0} {...register('price')} />
+            <TextInput label="Discounted Price (₹)" type="number" min={0} {...register('discountedPrice')} />
+          </SimpleGrid>
+          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm" mb="sm">
             <TextInput label="Duration (e.g. 6 Weeks)" {...register('duration')} />
             <TextInput label="Thumbnail Link" {...register('thumbnail')} />
-          </Group>
-          <Group grow mb="sm">
+          </SimpleGrid>
+          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm" mb="sm">
             <TextInput label="Language" {...register('language')} />
             <Select
               label="Difficulty Level"
@@ -223,24 +308,38 @@ export default function AdminCourses({ courses, categories, onReload }) {
               data={['Beginner', 'Intermediate', 'Advanced']}
               onChange={(val) => setValue('level', val || 'Beginner')}
             />
-          </Group>
-          <Group grow mb="sm">
+          </SimpleGrid>
+          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm" mb="sm">
             <Select
               label="Category"
               placeholder="Select category"
               required
+              searchable
               value={categoryValue || null}
               data={categories.map((c) => ({ value: c._id, label: c.name }))}
               onChange={(val) => setValue('category', val || '')}
             />
             <TextInput label="Instructor Name" {...register('instructor')} />
-          </Group>
-          <Checkbox
-            label="Publish instantly to users"
-            checked={Boolean(isPublishedValue)}
-            onChange={(e) => setValue('isPublished', e.currentTarget.checked)}
-            mb="lg"
+          </SimpleGrid>
+          <TextInput
+            label="Catalog Display Order"
+            type="number"
+            description="Lower numbers appear first in Browse Courses (default 100)"
+            {...register('displayOrder')}
+            mb="sm"
           />
+          <Group gap="lg" wrap="wrap" mb="lg">
+            <Checkbox
+              label="Publish instantly to users"
+              checked={Boolean(isPublishedValue)}
+              onChange={(e) => setValue('isPublished', e.currentTarget.checked)}
+            />
+            <Checkbox
+              label="Feature on Home page"
+              checked={Boolean(isFeaturedValue)}
+              onChange={(e) => setValue('isFeatured', e.currentTarget.checked)}
+            />
+          </Group>
           <Group justify="flex-end">
             <Button variant="default" onClick={() => setModalOpen(false)}>Cancel</Button>
             <Button type="submit" color="indigo" loading={saving}>

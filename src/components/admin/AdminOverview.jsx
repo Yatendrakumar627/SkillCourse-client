@@ -44,20 +44,23 @@ export default function AdminOverview({ payments, students, courses, pendingPaym
     });
   const revenueData = last7;
 
-  // Real enrollments per course from payment records
+  // Real enrollments per course from approved payment records (top 8 descending)
   const courseMap = {};
-  payments.forEach((p) => {
-    const title = p.course?.title || 'Unknown';
-    courseMap[title] = (courseMap[title] || 0) + 1;
-  });
+  payments
+    .filter((p) => p.status === 'approved')
+    .forEach((p) => {
+      const title = p.course?.title || 'Unknown';
+      courseMap[title] = (courseMap[title] || 0) + 1;
+    });
   const enrollData = Object.entries(courseMap)
+    .sort((a, b) => b[1] - a[1])
     .slice(0, 8)
     .map(([name, value]) => ({ name, students: value }));
 
   return (
     <>
       <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="lg" mb="xl">
-        <StatCard label="Total Revenue" value={`₹${totalRevenue}`} icon={IconCash} sub="Approved payments" />
+        <StatCard label="Total Revenue" value={`₹${totalRevenue.toLocaleString('en-IN')}`} icon={IconCash} sub="Approved payments" />
         <StatCard label="Total Students" value={students.length} icon={IconUsers} sub="Registered accounts" />
         <StatCard label="Courses in LMS" value={courses.length} icon={IconBook} sub="Active catalog" />
         <StatCard
@@ -88,7 +91,7 @@ export default function AdminOverview({ payments, students, courses, pendingPaym
         </Card>
 
         <Card withBorder radius="lg" p="lg">
-          <SectionShell title="Enrollments by Course" subtitle="Purchase requests per course" mb={0} p={0} withBorder={false}>
+          <SectionShell title="Enrollments by Course" subtitle="Approved enrollments (top 8 courses)" mb={0} p={0} withBorder={false}>
             <div style={{ height: 280, width: '100%', marginTop: 8 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={enrollData} margin={{ top: 5, right: 16, left: 0, bottom: 5 }}>

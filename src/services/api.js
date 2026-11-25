@@ -139,6 +139,11 @@ export const createLiveClassAPI = async (classData) => {
   return data;
 };
 
+export const updateLiveClassAPI = async (id, classData) => {
+  const { data } = await API.put(`/live-classes/${id}`, classData);
+  return data;
+};
+
 export const deleteLiveClassAPI = async (id) => {
   const { data } = await API.delete(`/live-classes/${id}`);
   return data;
@@ -152,6 +157,11 @@ export const getAnnouncementsAPI = async () => {
 
 export const createAnnouncementAPI = async (announcementData) => {
   const { data } = await API.post('/announcements', announcementData);
+  return data;
+};
+
+export const updateAnnouncementAPI = async (id, announcementData) => {
+  const { data } = await API.put(`/announcements/${id}`, announcementData);
   return data;
 };
 
@@ -215,6 +225,18 @@ export const createAssignmentAPI = async (courseId, formData) => {
   return data;
 };
 
+export const updateAssignmentAPI = async (courseId, id, formData) => {
+  const { data } = await API.put(`/courses/${courseId}/assignments/${id}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return data;
+};
+
+export const deleteAssignmentAPI = async (courseId, id) => {
+  const { data } = await API.delete(`/courses/${courseId}/assignments/${id}`);
+  return data;
+};
+
 export const submitAssignmentAPI = async (courseId, assignmentId, formData) => {
   const { data } = await API.post(`/courses/${courseId}/assignments/${assignmentId}/submit`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
@@ -259,9 +281,40 @@ export const getStudentActivityAPI = async (studentId) => {
   return data;
 };
 
+export const grantStudentEnrollmentAPI = async (studentId, courseId) => {
+  const { data } = await API.post(`/students/${studentId}/enroll`, { courseId });
+  return data;
+};
+
+export const revokeStudentEnrollmentAPI = async (studentId, courseId) => {
+  const { data } = await API.delete(`/students/${studentId}/enroll/${courseId}`);
+  return data;
+};
+
 // --- CONTACT API ---
+export const getContactMessagesAPI = async () => {
+  const { data } = await API.get('/contact');
+  return data;
+};
+
 export const submitContactAPI = async (contactData) => {
   const { data } = await API.post('/contact', contactData);
+  return data;
+};
+
+export const deleteContactMessageAPI = async (id) => {
+  const { data } = await API.delete(`/contact/${id}`);
+  return data;
+};
+
+// --- TELEGRAM 2GB FILE DELIVERY API ---
+export const testTelegramAPI = async () => {
+  const { data } = await API.post('/telegram/test');
+  return data;
+};
+
+export const requestTelegramFileAPI = async (moduleId) => {
+  const { data } = await API.post('/telegram/deliver', { moduleId });
   return data;
 };
 

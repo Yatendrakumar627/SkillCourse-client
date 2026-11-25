@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Table, Button, Group, Modal, TextInput, Textarea, Select, Badge } from '@mantine/core';
 import { useForm } from 'react-hook-form';
 import { IconPlus } from '@tabler/icons-react';
-import { createAnnouncementAPI, deleteAnnouncementAPI } from '../../services/api';
+import { createAnnouncementAPI, updateAnnouncementAPI, deleteAnnouncementAPI } from '../../services/api';
 import TablePanel from '../ui/TablePanel';
 import EmptyState from '../ui/EmptyState';
 import ConfirmModal from '../ui/ConfirmModal';
@@ -10,6 +10,7 @@ import { notifyError, notifySuccess } from '../../utils/toast';
 
 export default function AdminAnnouncements({ courses, announcements, onReload }) {
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingAnn, setEditingAnn] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -19,20 +20,36 @@ export default function AdminAnnouncements({ courses, announcements, onReload })
   });
   const targetCourse = watch('course');
 
-  const handleOpenModal = () => {
-    reset({ course: '', title: '', message: '' });
+  const handleOpenModal = (ann = null) => {
+    setEditingAnn(ann);
+    if (ann) {
+      reset({
+        course: ann.course?._id || ann.course || '',
+        title: ann.title || '',
+        message: ann.message || '',
+      });
+    } else {
+      reset({ course: '', title: '', message: '' });
+    }
     setModalOpen(true);
   };
 
   const onSubmitAnn = async (data) => {
     setSaving(true);
     try {
-      await createAnnouncementAPI(data);
+      if (editingAnn) {
+        await updateAnnouncementAPI(editingAnn._id, data);
+      } else {
+        await createAnnouncementAPI(data);
+      }
       setModalOpen(false);
       onReload();
-      notifySuccess('Announcement Posted', 'Students have been notified.');
+      notifySuccess(
+        editingAnn ? 'Announcement Updated' : 'Announcement Posted',
+        editingAnn ? 'Changes saved.' : 'Students have been notified.'
+      );
     } catch (error) {
-      notifyError('Post Failed', 'Error posting announcement.', error);
+      notifyError('Save Failed', 'Error saving announcement.', error);
     } finally {
       setSaving(false);
     }
@@ -62,7 +79,7 @@ export default function AdminAnnouncements({ courses, announcements, onReload })
           <Button
             color="indigo"
             leftSection={<IconPlus size={16} />}
-            onClick={handleOpenModal}
+            onClick={() => handleOpenModal()}
           >
             Broadcast Announcement
           </Button>
@@ -89,7 +106,10 @@ export default function AdminAnnouncements({ courses, announcements, onReload })
                   <Table.Td fw={500}>{ann.title}</Table.Td>
                   <Table.Td>{ann.message}</Table.Td>
                   <Table.Td>
-                    <Button size="xs" color="red" onClick={() => setDeleteTarget(ann)}>Delete</Button>
+                    <Group gap="xs" wrap="nowrap">
+                      <Button size="xs" variant="default" onClick={() => handleOpenModal(ann)}>Edit</Button>
+                      <Button size="xs" color="red" onClick={() => setDeleteTarget(ann)}>Delete</Button>
+                    </Group>
                   </Table.Td>
                 </Table.Tr>
               ))}
@@ -100,12 +120,14 @@ export default function AdminAnnouncements({ courses, announcements, onReload })
         )}
       </TablePanel>
 
-      {/* Broadcast Modal */}
-      <Modal opened={modalOpen} onClose={() => setModalOpen(false)} title="Broadcast Announcement">
+      {/* Broadcast / Edit Modal */}
+      <Modal opened={modalOpen} onClose={() => setModalOpen(false)} title={editingAnn ? 'Edit Announcement' : 'Broadcast Announcement'}>
         <form onSubmit={handleSubmit(onSubmitAnn)}>
           <Select
             label="Target Course (Optional - leave empty for global)"
             placeholder="Global (all students)"
+            searchable
+            nothingFoundMessage="No matching course"
             value={targetCourse ?? ''}
             data={[{ value: '', label: 'Global (all students)' }, ...courses.map((c) => ({ value: c._id, label: c.title }))]}
             onChange={(val) => setValue('course', val || '')}
@@ -116,7 +138,7 @@ export default function AdminAnnouncements({ courses, announcements, onReload })
           <Group justify="flex-end">
             <Button variant="default" onClick={() => setModalOpen(false)}>Cancel</Button>
             <Button type="submit" color="indigo" loading={saving}>
-              Broadcast
+              {editingAnn ? 'Save Changes' : 'Broadcast'}
             </Button>
           </Group>
         </form>
